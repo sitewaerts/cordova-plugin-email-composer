@@ -1,0 +1,31 @@
+{
+  "name": "cordova-plugin-email-composer",
+  "version": "0.8.3dev",
+  "description": "Cordova Email Composer Plugin",
+  "cordova": {
+    "id": "cordova-plugin-email-composer",
+    "platforms": [
+      "android",
+      "amazon-fireos",
+      "ios",
+      "windows",
+      "browser"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/katzer/cordova-plugin-email-composer"
+  },
+  "keywords": [
+    "cordova",
+    "file",
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-amazon-fireos",
+    "cordova-ios",
+    "cordova-windows",
+    "cordova-browser"
+  ],
+  "author": "Sebastián Katzer",
+  "license": "Apache 2.0"
+}

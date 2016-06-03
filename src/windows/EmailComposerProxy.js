@@ -56,22 +56,45 @@ exports.open = function (success, error, args) {
             .done(function () {
                 if (Debug.debuggerEnabled) {
                     success();
-                    console.log('degugmode');
+                    console.log('debugmode');
                 } else {
                     Windows.UI.WebUI.WebUIApplication.addEventListener("resuming", function () {
                         success();
                     }, false);
                 }
-                
+
             });
-    } else {
-        var mailTo = exports.draftUtil.getMailTo(props);
-        Windows.System.Launcher.launchUriAsync(mailTo).then(
-           function (mailToSuccess) {
-               if (mailToSuccess) {
-                   success();
-               }
-           });
+    } else{
+
+        function launchFile(launchInfo)
+        {
+            Windows.System.Launcher.launchFileAsync(
+                            launchInfo.file, launchInfo.options).then(
+               function (launchSuccess) {
+                   launchInfo.close();
+                   if (launchSuccess) {
+                       success();
+                   }
+               });
+        }
+
+        function launchUri(launchInfo)
+        {
+            Windows.System.Launcher.launchUriAsync(
+                            launchInfo.uri, launchInfo.options).then(
+               function (launchSuccess) {
+                   launchInfo.close();
+                   if (launchSuccess) {
+                       success();
+                   }
+               });
+
+        }
+
+        if(exports.draftUtil.supportsEMLFile(props))
+            exports.draftUtil.getEMLFile(props, launchFile);
+        else
+            exports.draftUtil.getMailToUri(props, launchUri);
     }
 };
 

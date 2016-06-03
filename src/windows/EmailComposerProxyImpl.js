@@ -22,7 +22,7 @@ under the License.
 var proxy = require('de.appplant.cordova.plugin.email-composer.EmailComposerProxy');
 
 	proxy.draftUtil = {
-	
+
 		/**
 		 * The Email with the containing properties.
 		 *
@@ -48,97 +48,85 @@ var proxy = require('de.appplant.cordova.plugin.email-composer.EmailComposerProx
 			this.setAttachments(props.attachments, mail);
 
 			return mail;
-		},
-
-	getMailTo: function (props) {
-        function appendParam(name, value)
-        {
-            if (value == null || value == '')
-                return '';
-            value = ([].concat(value)).join(",");
-            if (value == '')
-                return '';
-            return '&' + name + "=" + encodeURIComponent(value);
-        }
-
-        function toPlainText(markupText)
-        {
-            if (!markupText)
-                return null;
-
-            function replaceBodyTag(markupText, tagName, replacement)
-            {
-                markupText = markupText.replace(new RegExp("<" + tagName
-                        + " ?[^>]*>", "g"), "");
-                markupText = markupText.replace(new RegExp("</" + tagName + ">",
-                        "g"), replacement);
-                return markupText;
-            }
-
-            function replaceBrTag(markupText)
-            {
-                return markupText.replace(/\s*<br>\s*/g, "\n");
-            }
-
-            function replaceAnchorTag(markupText)
-            {
-                return markupText.replace(/<a [^>]*href="(.*)"[^>]*> *(.*) *<\/a>/g,
-                        function (all, href, content)
-                        {
-                            return content + " " + href + " ";
-                        });
-            }
-
-            markupText = markupText.replace(/\s*\n\s*/g, " ");
-            markupText = markupText.replace(/>\s*</g, "><");
-
-            markupText = replaceAnchorTag(markupText);
-            markupText = replaceBrTag(markupText);
-
-            markupText = replaceBodyTag(markupText, "h1", "\n\n\n");
-            markupText = replaceBodyTag(markupText, "h2", "\n\n");
-            markupText = replaceBodyTag(markupText, "p", "\n\n");
-
-            if($)
-            {
-                // use jquery to expand all entities and remove all tags
-                return $('<span>').html(markupText).text();
-            }
-            else
-            {
-                return markupText;
-            }
-        }
-
-
-        var body = props.body;
-        if (props.isHtml == true || props.isHtml == 'true')
-        {
-            // mailto links do not support markup text
-            body = toPlainText(body);
-        }
-
-        // The URI to launch
-        var uriToLaunch = "mailto:" + ([].concat(props.to)).join(",");
-
-        var options = '';
-        options = options + appendParam('subject', props.subject);
-        options = options + appendParam('cc', props.cc);
-        options = options + appendParam('bcc', props.bcc);
-        // append body as last param, as it may expire the uri max length
-        options = options + appendParam('body', body);
-
-        if (options !== '')
-        {
-            options = '?' + options.substring(1);
-            uriToLaunch = uriToLaunch + options;
-        }
-
-        // Create a Uri object from a URI string
-        var uri = new Windows.Foundation.Uri(uriToLaunch);
-
-        return uri;
 	},
+
+    /**
+     * create mailto link as Windows.Foundation.Uri and corresponding Windows.System.LauncherOptions
+     * @param {*} props
+     * @param {function({ uri : Windows.Foundation.Uri, options : Windows.System.LauncherOptions, close : function})} callback
+     */
+    getMailToUri: function (props, callback) {
+
+        var mailTo = proxy.commonUtil.getMailToUri(props);
+        var options = new Windows.System.LauncherOptions();
+        //options.contentType = mailTo.contentType;
+        callback({
+            uri : new Windows.Foundation.Uri(mailTo.uri),
+            options : options,
+            close : function(){
+                mailTo.close();
+            }
+        });
+	},
+
+    /**
+     * opening email draft from eml file ist not supported by some email apps
+     * e.g. outlook supports it, but the windows mail app doesn't
+     * to use the the eml feature the property emlFile = true must be specified
+     *
+     * advantage of the eml file: body may contain html content,
+     * which is not supported by mailto links
+     *
+     * @return {boolean}
+     */
+    supportsEMLFile: function (props) {
+        if(!(WinJS && WinJS.Application && WinJS.Application.temp))
+            return false;
+        if(!props.emlFile)
+            return false;
+
+        return props.emlFile == true || props.emlFile == 'true';
+	},
+
+    /**
+     * create temp eml file and corresponding Windows.System.LauncherOptions
+     * @param {*} props
+     * @param {function({ file : StorageFile, options : Windows.System.LauncherOptions, close : function})} callback
+     */
+    getEMLFile: function (props, callback) {
+
+        var eml = proxy.commonUtil.getEMLContent(props);
+        var options = new Windows.System.LauncherOptions();
+        //options.contentType = eml.contentType;
+        //options.displayApplicationPicker = true;
+
+        WinJS.Application.temp.folder.createFileAsync(
+           "emailcomposer.eml",
+           Windows.Storage.CreationCollisionOption.replaceExisting).done(
+                function (tempFile) {
+                    Windows.Storage.FileIO.writeTextAsync(
+                        tempFile,
+                        eml.text,
+                        Windows.Storage.Streams.UnicodeEncoding.utf8).done(
+                            function(){
+                                callback({
+                                    file : tempFile,
+                                    options : options,
+                                    close : function(){
+                                        eml.close();
+                                        // wait until app has started and read the file
+                                        setTimeout(function () {
+                                            tempFile.deleteAsync();
+                                        }, 5000);
+                                    }
+                                });
+
+                            }
+                    );
+                }
+        );
+    },
+
 
 	/**
 	 * Setter for the subject.
