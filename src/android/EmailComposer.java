@@ -1,6 +1,4 @@
 /*
-    Copyright 2013-2016 appPlant UG
-
     Licensed to the Apache Software Foundation (ASF) under one
     or more contributor license agreements.  See the NOTICE file
     distributed with this work for additional information
@@ -37,13 +35,23 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.Manifest.permission.GET_ACCOUNTS;
+
 @SuppressWarnings("Convert2Diamond")
 public class EmailComposer extends CordovaPlugin {
 
-    /**
-     * The log tag for this plugin
-     */
-    static protected final String LOG_TAG = "EmailComposer";
+    // The log tag for this plugin
+    static final String LOG_TAG = "EmailComposer";
+
+    // Required permissions to work properly
+    private static final String PERMISSION = GET_ACCOUNTS;
+
+    private JSONArray args;
+
+    // Request codes used to determine what to do after they have been
+    // granted or denied by the user.
+    private static final int EXEC_AVAIL_AFTER = 0;
+    private static final int EXEC_CHECK_AFTER = 1;
 
     // Implementation of the plugin.
     private final EmailComposerImpl impl = new EmailComposerImpl();
@@ -83,15 +91,30 @@ public class EmailComposer extends CordovaPlugin {
     public boolean execute (String action, JSONArray args,
                             CallbackContext callback) throws JSONException {
 
+        this.args    = args;
         this.command = callback;
 
         if ("open".equalsIgnoreCase(action)) {
-            open(args);
+            open(args.getJSONObject(0));
             return true;
         }
 
         if ("isAvailable".equalsIgnoreCase(action)) {
+            if (cordova.hasPermission(PERMISSION)) {
             isAvailable(args.getString(0));
+            } else {
+                requestPermissions(EXEC_AVAIL_AFTER);
+            }
+            return true;
+        }
+
+        if ("hasPermission".equalsIgnoreCase(action)) {
+            hasPermission();
+            return true;
+        }
+
+        if ("requestPermission".equalsIgnoreCase(action)) {
+            requestPermissions(EXEC_CHECK_AFTER);
             return true;
         }
 
@@ -106,17 +129,16 @@ public class EmailComposer extends CordovaPlugin {
     /**
      * Tells if the device has the capability to send emails.
      *
-     * @param id
-     * The app id.
+     * @param id The app id.
      */
     private void isAvailable (final String id) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
-                boolean[] available = impl.canSendMail(id, getContext());
+                boolean[] res = impl.canSendMail(id, getContext());
                 List<PluginResult> messages = new ArrayList<PluginResult>();
 
-                messages.add(new PluginResult(PluginResult.Status.OK, available[0]));
-                messages.add(new PluginResult(PluginResult.Status.OK, available[1]));
+                messages.add(new PluginResult(PluginResult.Status.OK, res[0]));
+                messages.add(new PluginResult(PluginResult.Status.OK, res[1]));
 
                 PluginResult result = new PluginResult(
                         PluginResult.Status.OK, messages);
@@ -129,12 +151,9 @@ public class EmailComposer extends CordovaPlugin {
     /**
      * Sends an intent to the email app.
      *
-     * @param args
-     * The email properties like subject or body
-     * @throws JSONException
+     * @param props The email properties like subject or body
      */
-    private void open (JSONArray args) throws JSONException {
-        JSONObject props = args.getJSONObject(0);
+    private void open (JSONObject props) throws JSONException {
         String appId     = props.getString("app");
 
         if (!(impl.canSendMail(appId, getContext()))[0]) {
@@ -156,6 +175,28 @@ public class EmailComposer extends CordovaPlugin {
     }
 
     /**
+     * Check if the required permissions are granted.
+     */
+    private void hasPermission() {
+        Boolean hasPermission = cordova.hasPermission(PERMISSION);
+
+        PluginResult result = new PluginResult(
+                PluginResult.Status.OK, hasPermission);
+
+        command.sendPluginResult(result);
+    }
+
+    /**
+     * Request permission to read account details.
+     *
+     * @param requestCode The code to attach to the request.
+     */
+    @Override
+    public void requestPermissions (int requestCode) {
+        cordova.requestPermission(this, requestCode, PERMISSION);
+    }
+
+    /**
      * Called when an activity you launched exits, giving you the reqCode you
      * started it with, the resCode it returned, and any additional data from it.
      *
@@ -172,5 +213,30 @@ public class EmailComposer extends CordovaPlugin {
             command.success();
         }
     }
+
+    /**
+     * Called by the system when the user grants permissions.
+     *
+     * @param code The requested code.
+     * @param permissions The requested permissions.
+     * @param grantResults The grant result for the requested permissions.
+     */
+    @Override
+    public void onRequestPermissionResult (int code, String[] permissions,
+                                           int[] grantResults) {
+        try {
+            switch (code) {
+                case EXEC_CHECK_AFTER:
+                    hasPermission();
+                    break;
+
+                case EXEC_AVAIL_AFTER:
+                    isAvailable(this.args.getString(0));
+                    break;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+}
 
 }

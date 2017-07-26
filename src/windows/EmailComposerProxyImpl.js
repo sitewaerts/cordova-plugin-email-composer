@@ -1,6 +1,4 @@
 /*
-Copyright 2013-2015 appPlant UG
-
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
 distributed with this work for additional information
@@ -19,43 +17,51 @@ specific language governing permissions and limitations
 under the License.
 */
 
-var proxy = require('de.appplant.cordova.plugin.email-composer.EmailComposerProxy'),
+var proxy = require('cordova-plugin-email-composer.EmailComposerProxy'),
     impl  = proxy.impl = {},
     WinMail = Windows.ApplicationModel.Email;
 
 /**
  * The Email with the containing properties.
  *
- * @param {Object} props
- *      The email properties like subject or body
- * @return {Windows.ApplicationModel.Email.EmailMessage}
- *      The resulting email draft
+ * @param [ Object ] props Properties like subject.
+ *
+ * @return [ Email.EmailMessage ]
  */
 impl.getDraftWithProperties = function (props) {
     var me = this;
 
-    return new WinJS.Promise(function (complete) {
+    return new WinJS.Promise(function (complete, error) {
         var mail = new WinMail.EmailMessage();
 
         // subject
         me.setSubject(props.subject, mail);
-        // body
-        me.setBody(props.body, props.isHtml, mail);
         // To recipients
         me.setRecipients(props.to, mail.to);
         // CC recipients
         me.setRecipients(props.cc, mail.cc);
         // BCC recipients
         me.setRecipients(props.bcc, mail.bcc);
-        // attachments
-        me.setAttachments(props.attachments, mail)
 
+        // body
+        me.setBody(props.body, props.isHtml, mail)
         .then(function () {
+            // attachments
+            return me.setAttachments(props.attachments, mail)
+        }, error)
+        .done(function () {
             complete(mail);
-        });
+        }, error);
     });
 };
 
+/**
+ * Construct a mailto: string based on the provided properties.
+ *
+ * @param [ Object ] props Properties like subject.
+ *
+ * @return [ Windows.Foundation.Uri ]
+ */
 impl.getMailTo = function (props) {
         function appendParam(name, value)
         {
@@ -147,12 +153,70 @@ impl.getMailTo = function (props) {
 	};
 
 /**
+    * opening email draft from eml file ist not supported by some email apps
+    * e.g. outlook supports it, but the windows mail app doesn't
+    * to use the the eml feature the property emlFile = true must be specified
+    *
+    * advantage of the eml file: body may contain html content,
+    * which is not supported by mailto links
+    *
+    * @return {boolean}
+    */
+   impl.supportsEMLFile = function (props) {
+       if(!(WinJS && WinJS.Application && WinJS.Application.temp))
+           return false;
+       if(!props.emlFile)
+           return false;
+
+       return props.emlFile == true || props.emlFile == 'true';
+};
+
+   /**
+    * create temp eml file and corresponding Windows.System.LauncherOptions
+    * @param {*} props
+    * @param {function({ file : StorageFile, options : Windows.System.LauncherOptions, close : function})} callback
+    */
+   impl.getEMLFile = function (props, callback) {
+
+       var eml = proxy.commonUtil.getEMLContent(props);
+       var options = new Windows.System.LauncherOptions();
+       //options.contentType = eml.contentType;
+       //options.displayApplicationPicker = true;
+
+       WinJS.Application.temp.folder.createFileAsync(
+          "emailcomposer.eml",
+          Windows.Storage.CreationCollisionOption.replaceExisting).done(
+               function (tempFile) {
+                   Windows.Storage.FileIO.writeTextAsync(
+                       tempFile,
+                       eml.text,
+                       Windows.Storage.Streams.UnicodeEncoding.utf8).done(
+                           function(){
+                               callback({
+                                   file : tempFile,
+                                   options : options,
+                                   close : function(){
+                                       eml.close();
+                                       // wait until app has started and read the file
+                                       setTimeout(function () {
+                                           tempFile.deleteAsync();
+                                       }, 60000);
+                                   }
+                               });
+
+                           }
+                   );
+               }
+       );
+   };
+
+/**
  * Setter for the subject.
  *
- * @param {String} subject
- *      The subject
- * @param {Windows.ApplicationModel.Email.EmailMessage} draft
- *      The draft
+ * @param [ String ]             subject
+ * @param [ Email.EmailMessage ] draft
+ *
+ * @return [ Void ]
  */
 impl.setSubject = function (subject, draft) {
     draft.subject = subject;
@@ -161,25 +225,71 @@ impl.setSubject = function (subject, draft) {
 /**
  * Setter for the body.
  *
- * @param {String} body
- *      The body
- * @param isHTML
- *      Indicates the encoding
- *      (HTML or plain text)
- * @param {Windows.ApplicationModel.Email.EmailMessage} draft
- *      The draft
+ * @param [ String ]  body
+ * @param [ Boolean ] isHTML Indicates the encoding (HTML or plain text)
+ * @param [ Email.EmailMessage ] draft
+ *
+ * @return [ Void ]
  */
 impl.setBody = function (body, isHTML, draft) {
-    draft.body = body;
+    if(!isHTML)
+    {
+        draft.body = body;
+        return WinJS.Promise.as(draft);
+    }
+
+
+    return new WinJS.Promise(function (complete, error)
+    {
+        try
+        {
+            var writer = Windows.Storage.Streams.DataWriter(
+                    new Windows.Storage.Streams.InMemoryRandomAccessStream());
+            writer.unicodeEncoding = Windows.Storage.Streams.UnicodeEncoding.utf8;
+            writer.byteOrder = Windows.Storage.Streams.ByteOrder.littleEndian;
+
+            writer.writeInt32(writer.measureString(body));
+            writer.writeString(body);
+
+            writer.storeAsync().then(function ()
+            {
+                // For the in-memory stream implementation we are using, the flushAsync call
+                // is superfluous, but other types of streams may require it.
+                return writer.flushAsync();
+            }).then(function ()
+            {
+                var stream = writer.detachStream();
+                stream.seek(0);
+                writer.close();
+                // will fail if app is compiled for win8.1
+                draft.setBodyStream(
+                        Windows.ApplicationModel.Email.EmailMessageBodyKind.html,
+                        stream);
+                return draft;
+            }).done(complete, function(e){
+                if (console)
+                    console.log("cannot set html body stream", e);
+                error(e);
+            });
+        }
+        catch (e)
+        {
+            if (console)
+                console.log("cannot set html body stream", e);
+            error(e);
+        }
+
+    });
+
 };
 
 /**
  * Setter for the recipients.
  *
- * @param {String[]} recipients
- *      List of mail addresses
- * @param {Windows.ApplicationModel.Email.EmailMessage} draft
- *      The draft.to / *.cc / *.bcc
+ * @param [ Array<String> ]      recipients List of emails
+ * @param [ Email.EmailMessage ] draft
+ *
+ * @return [ Void ]
  */
 impl.setRecipients = function (recipients, draft) {
     recipients.forEach(function (address) {
@@ -190,10 +300,10 @@ impl.setRecipients = function (recipients, draft) {
 /**
  * Setter for the attachments.
  *
- * @param {String[]} attachments
- *      List of URIs
- * @param {Windows.ApplicationModel.Email.EmailMessage} draft
- *      The draft
+ * @param [ Array<String> ]      attachments List of uris
+ * @param [ Email.EmailMessage ] draft
+ *
+ * @return [ Void ]
  */
 impl.setAttachments = function (attachments, draft) {
     var promises = [], me = this;
@@ -217,10 +327,9 @@ impl.setAttachments = function (attachments, draft) {
 /**
  * The URI for an attachment path.
  *
- * @param {String} path
- *      The given path to the attachment
- * @return
- *      The URI pointing to the given path
+ * @param [ String ] path The path to the attachment.
+ *
+ * @return [ Windows.Foundation.Uri ]
  */
 impl.getUriForPath = function (path) {
     var me = this;
@@ -232,6 +341,8 @@ impl.getUriForPath = function (path) {
             complete(me.getUriForAbsolutePath(path));
         } else if (path.match(/^file:/)) {
             complete(me.getUriForAssetPath(path));
+        } else if (path.match(/^app:/)) {
+            complete(me.getUriForAppInternalPath(path));
         } else if (path.match(/^base64:/)) {
             me.getUriFromBase64(path).then(complete);
         } else {
@@ -243,10 +354,9 @@ impl.getUriForPath = function (path) {
 /**
  * The URI for a file.
  *
- * @param {String} path
- *      The given absolute path
- * @return
- *      The URI pointing to the given path
+ * @param [ String ] path Absolute path to the attachment.
+ *
+ * @return [ Windows.Foundation.Uri ]
  */
 impl.getUriForAbsolutePath = function (path) {
     return new Windows.Foundation.Uri(path);
@@ -255,10 +365,9 @@ impl.getUriForAbsolutePath = function (path) {
 /**
  * The URI for an asset.
  *
- * @param {String} path
- *      The given asset path
- * @return
- *      The URI pointing to the given path
+ * @param [ String ] path Asset path to the attachment.
+ *
+ * @return [ Windows.Foundation.Uri ]
  */
 impl.getUriForAssetPath = function (path) {
     var resPath = path.replace('file:/', '/www');
@@ -269,10 +378,9 @@ impl.getUriForAssetPath = function (path) {
 /**
  * The URI for a resource.
  *
- * @param {String} path
- *      The given relative path
- * @return
- *      The URI pointing to the given path
+ * @param [ String ] path Relative path to the attachment.
+ *
+ * @return [ Windows.Foundation.Uri ]
  */
 impl.getUriForResourcePath = function (path) {
     var resPath = path.replace('res:/', '/images');
@@ -281,12 +389,24 @@ impl.getUriForResourcePath = function (path) {
 };
 
 /**
+ * The URI for an app internal file.
+ *
+ * @param [ String ] path Relative path to the app root dir.
+ *
+ * @return [ Windows.Foundation.Uri ]
+ */
+impl.getUriForAppInternalPath = function (path) {
+    var resPath = path.replace('app:/', '/');
+
+    return this.getUriForPathUtil(resPath);
+};
+
+/**
  * The URI for a path.
  *
- * @param {String} resPath
- *      The given relative path
- * @return
- *      The URI pointing to the given path
+ * @param [ String ] path Relative path to the attachment.
+ *
+ * @return [ Windows.Foundation.Uri ]
  */
 impl.getUriForPathUtil = function (resPath) {
     var rawUri = 'ms-appx:' + '//' + resPath;
@@ -297,10 +417,9 @@ impl.getUriForPathUtil = function (resPath) {
 /**
  * The URI for a base64 encoded content.
  *
- * @param {String} content
- *      The given base64 encoded content
- * @return
- *      The URI including the given content
+ * @param [ String ] content Base64 encoded content.
+ *
+ * @return [ Windows.Foundation.Uri ]
  */
 impl.getUriFromBase64 = function (content) {
     return new WinJS.Promise(function (complete) {

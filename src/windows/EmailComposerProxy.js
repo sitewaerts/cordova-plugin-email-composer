@@ -1,8 +1,6 @@
 /* globals Windows: true */
 
 /*
-    Copyright 2013-2016 appPlant UG
-
     Licensed to the Apache Software Foundation (ASF) under one
     or more contributor license agreements.  See the NOTICE file
     distributed with this work for additional information
@@ -27,12 +25,11 @@ var WinLauncher = Windows.System.Launcher,
 /**
  * Verifies if sending emails is supported on the device.
  *
- * @param {Function} success
- *      Success callback function
- * @param {Function} error
- *      Error callback function
- * @param {Array} args
- *      Interface arguments
+ * @param [ Function ] success Success callback
+ * @param [ Function ] error   Error callback
+ * @param [ Array ]    args    Interface arguments
+ *
+ * @return [ Void ]
  */
 exports.isAvailable = function (success, error, args) {
     success(true);
@@ -41,53 +38,101 @@ exports.isAvailable = function (success, error, args) {
 /**
  * Displays the email composer pre-filled with data.
  *
- * @param {Function} success
- *      Success callback function
- * @param {Function} error
- *      Error callback function
- * @param {Array} args
- *      Interface arguments
+ * @param [ Function ] success Success callback
+ * @param [ Function ] error   Error callback
+ * @param [ Array ]    args    Interface arguments
+ *
+ * @return [ Void ]
  */
 exports.open = function (success, error, args) {
     var props = args[0],
         impl  = exports.impl;
 
+    var onError = function(e){
+                if(console)
+                    console.error("cannot open email composer", e);
+                if(error)
+                    error(e);
+    };
+
     if (WinMail) {
             impl.getDraftWithProperties(props)
-                .then(WinMail.EmailManager.showComposeNewEmailAsync)
-                .done(success, error);
+                .then(WinMail.EmailManager.showComposeNewEmailAsync, function (e) {
+                    // could not compose
+                    if(props.isHtml)
+                    {
+                        // may be compose failed because this app is compiled for win8.1 but running on win10
+                        //  --> in this special case WinMail is available, but the EmailMessage.setBodyStream api is not fully supported
+                        // retry via eml file
+                        sendViaLauncher();
+                    }
+                    else {
+                        onError(e);
+                    }
+                })
+                .done(success, onError);
     } else{
-    
-            function launchFile(launchInfo)
-            {
-                Windows.System.Launcher.launchFileAsync(
-                                launchInfo.file, launchInfo.options).then(
-                   function (launchSuccess) {
-                       launchInfo.close();
-                       if (launchSuccess) {
-                           success();
-                       }
-                   });
-            }
-    
-            function launchUri(launchInfo)
-            {
-                Windows.System.Launcher.launchUriAsync(
-                                launchInfo.uri, launchInfo.options).then(
-                   function (launchSuccess) {
-                       launchInfo.close();
-                       if (launchSuccess) {
-                           success();
-                       }
-                   });
-    
-            }
-    
-            if(impl.supportsEMLFile(props))
-                impl.getEMLFile(props, launchFile);
-            else
-                impl.getMailToUri(props, launchUri);
+        sendViaLauncher();
+    }
+
+    function sendViaLauncher()
+    {
+        function launchFile(launchInfo)
+        {
+            WinLauncher.launchFileAsync(
+                    launchInfo.file, launchInfo.options).done(
+                    function (launchSuccess)
+                    {
+                        launchInfo.close();
+                        if (launchSuccess)
+                        {
+                            success();
+                        }
+                    }, function (e)
+                    {
+                        try
+                        {
+                            launchInfo.close();
+                        }
+                        catch (er)
+                        {
+                            e.followUp = er;
+                        }
+                        onError(e);
+                    });
         }
+
+        function launchUri(launchInfo)
+        {
+            WinLauncher.launchUriAsync(
+                    launchInfo.uri, launchInfo.options).done(
+                    function (launchSuccess)
+                    {
+                        launchInfo.close();
+                        if (launchSuccess)
+                        {
+                            success();
+                        }
+                    }, function (e)
+                    {
+                        try
+                        {
+                            launchInfo.close();
+                        }
+                        catch (er)
+                        {
+                            e.followUp = er;
+                        }
+                        onError(e);
+                    });
+
+        }
+
+        if (impl.supportsEMLFile(props))
+            impl.getEMLFile(props, launchFile);
+        else
+            impl.getMailToUri(props, launchUri);
+    }
 };
 
 require('cordova/exec/proxy').add('EmailComposer', exports);
