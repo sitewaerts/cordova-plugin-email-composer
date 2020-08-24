@@ -54,14 +54,13 @@ All properties are optional. After opening the draft the user may have the possi
 
 ```javascript
 cordova.plugins.email.open({
-    from:       String, // sending email account (iOS only)
     to:          Array, // email addresses for TO field
     cc:          Array, // email addresses for CC field
     bcc:         Array, // email addresses for BCC field
     attachments: Array, // file paths or base64 data streams
     subject:    String, // subject of the email
-    body:       String, // email body
-    isHtml:    Boolean  // indicats if the body is HTML or plain text (primarily iOS and Windows)
+    body:       String, // email body (for HTML, set isHtml to true)
+    isHtml:    Boolean, // indicats if the body is HTML or plain text
 }, callback, scope);
 ```
 

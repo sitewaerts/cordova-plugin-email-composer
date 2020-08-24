@@ -40,8 +40,7 @@ import static android.Manifest.permission.*;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 @SuppressWarnings({"Convert2Diamond", "Convert2Lambda"})
-public class EmailComposer extends CordovaPlugin
-{
+public class EmailComposer extends CordovaPlugin {
 
     // The log tag for this plugin
     static final String LOG_TAG = "EmailComposer";
@@ -56,8 +55,7 @@ public class EmailComposer extends CordovaPlugin
      * @param webView CordovaWebView-instance
      */
     @Override
-    public void initialize(CordovaInterface cordova, CordovaWebView webView)
-    {
+    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
         AssetUtil.cleanupAttachmentFolder(getContext());
     }
@@ -80,38 +78,23 @@ public class EmailComposer extends CordovaPlugin
      */
     @Override
     public boolean execute(String action, JSONArray args,
-                           CallbackContext callback)
-            throws JSONException
-    {
+                           CallbackContext callback) throws JSONException {
 
         this.command = callback;
 
-        if ("open".equalsIgnoreCase(action))
-        {
+        if        ("open".equalsIgnoreCase(action)) {
             open(args.getJSONObject(0));
-        }
-        else if ("client".equalsIgnoreCase(action))
-        {
+        } else if ("client".equalsIgnoreCase(action)) {
             client(args.getString(0));
-        }
-        else if ("check".equalsIgnoreCase(action))
-        {
+        } else if ("check".equalsIgnoreCase(action)) {
             check(args.optInt(0, 0));
-        }
-        else if ("request".equalsIgnoreCase(action))
-        {
+        } else if ("request".equalsIgnoreCase(action)) {
             request(args.optInt(0, 0));
-        }
-        else if ("clients".equalsIgnoreCase(action))
-        {
+        } else if ("clients".equalsIgnoreCase(action)) {
             clients();
-        }
-        else if ("account".equalsIgnoreCase(action))
-        {
+        } else if ("account".equalsIgnoreCase(action)) {
             account();
-        }
-        else
-        {
+        } else {
             return false;
         }
 
@@ -121,8 +104,7 @@ public class EmailComposer extends CordovaPlugin
     /**
      * Returns the application context.
      */
-    private Context getContext()
-    {
+    private Context getContext() {
         return cordova.getActivity();
     }
 
@@ -131,13 +113,10 @@ public class EmailComposer extends CordovaPlugin
      *
      * @param id The app id.
      */
-    private void client(final String id)
-    {
-        cordova.getThreadPool().execute(new Runnable()
-        {
-            public void run()
-            {
-                Impl impl = new Impl(getContext());
+    private void client(final String id) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                Impl impl   = new Impl(getContext());
                 boolean res = impl.isAppInstalled(id);
 
                 sendResult(new PluginResult(Status.OK, res));
@@ -148,18 +127,14 @@ public class EmailComposer extends CordovaPlugin
     /**
      * List of the package IDs from all available email clients.
      */
-    private void clients()
-    {
-        cordova.getThreadPool().execute(new Runnable()
-        {
-            public void run()
-            {
-                Impl impl = new Impl(getContext());
-                List<String> ids = impl.getEmailClientIds();
+    private void clients() {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                Impl impl              = new Impl(getContext());
+                List<String> ids       = impl.getEmailClientIds();
                 List<PluginResult> res = new ArrayList<PluginResult>();
 
-                for (String id : ids)
-                {
+                for (String id:ids) {
                     res.add(new PluginResult(Status.OK, id));
                 }
 
@@ -171,13 +146,10 @@ public class EmailComposer extends CordovaPlugin
     /**
      * Tries to figure out if an email account is setup.
      */
-    private void account()
-    {
-        cordova.getThreadPool().execute(new Runnable()
-        {
-            public void run()
-            {
-                Impl impl = new Impl(getContext());
+    private void account() {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                Impl impl   = new Impl(getContext());
                 boolean res = impl.isEmailAccountConfigured();
 
                 sendResult(new PluginResult(Status.OK, res));
@@ -190,23 +162,17 @@ public class EmailComposer extends CordovaPlugin
      *
      * @param props The email properties like subject or body
      */
-    private void open(final JSONObject props)
-    {
+    private void open(final JSONObject props) {
         final EmailComposer me = this;
 
-        cordova.getThreadPool().execute(new Runnable()
-        {
-            public void run()
-            {
-                try
-                {
-                    Impl impl = new Impl(getContext());
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try {
+                    Impl impl    = new Impl(getContext());
                     Intent draft = impl.getDraft(props);
 
                     cordova.startActivityForResult(me, draft, 0);
-                }
-                catch (ActivityNotFoundException e)
-                {
+                } catch (ActivityNotFoundException e) {
                     onActivityResult(0, 0, null);
                 }
             }
@@ -218,9 +184,8 @@ public class EmailComposer extends CordovaPlugin
      *
      * @param code The code number of the permission to check for.
      */
-    private void check(int code)
-    {
-        check(getPermissions(code));
+    private void check(int code) {
+        check(getPermission(code));
     }
 
     /**
@@ -228,8 +193,7 @@ public class EmailComposer extends CordovaPlugin
      *
      * @param permissions The permissions to check for.
      */
-    private void check(String... permissions)
-    {
+    private void check(String... permissions){
         for (int i = 0; i < permissions.length; i++)
         {
             if (!cordova.hasPermission(permissions[i]))
@@ -246,8 +210,7 @@ public class EmailComposer extends CordovaPlugin
      *
      * @param code The code number of the permission to request for.
      */
-    private void request(int code)
-    {
+    private void request(int code){
        cordova.requestPermissions(this, code, getPermissions(code));
     }
 
@@ -257,8 +220,7 @@ public class EmailComposer extends CordovaPlugin
      * @param code The internal code number.
      * @return Array of the the Android permission strings or [].
      */
-    private String[] getPermissions(int code)
-    {
+    private String[] getPermissions(int code){
         switch (code)
         {
             case 1:
@@ -275,8 +237,7 @@ public class EmailComposer extends CordovaPlugin
      *
      * @param result The result to send to the webview.
      */
-    private void sendResult(PluginResult result)
-    {
+    private void sendResult(PluginResult result){
         if (command != null)
         {
             command.sendPluginResult(result);
@@ -297,8 +258,7 @@ public class EmailComposer extends CordovaPlugin
      *                (various data can be attached to Intent "extras").
      */
     @Override
-    public void onActivityResult(int reqCode, int resCode, Intent intent)
-    {
+    public void onActivityResult(int reqCode, int resCode, Intent intent) {
         sendResult(new PluginResult(Status.OK));
     }
 
@@ -311,8 +271,7 @@ public class EmailComposer extends CordovaPlugin
      */
     @Override
     public void onRequestPermissionResult(int code, String[] permissions,
-                                          int[] grantResults)
-    {
+                                          int[] grantResults){
         List<PluginResult> messages = new ArrayList<PluginResult>();
         boolean granted = true;
         for (int i = 0; i < grantResults.length; i++)

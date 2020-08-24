@@ -240,16 +240,13 @@ class Impl {
         try {
             Pattern emailPattern = Patterns.EMAIL_ADDRESS;
 
-            if(am.getAccounts().length == 0)
-                Log.d(LOG_TAG, "no accounts");
             for (Account account : am.getAccounts()) {
-                Log.d(LOG_TAG, "account: " + account.name);
                 if (emailPattern.matcher(account.name).matches()) {
                     return true;
                 }
             }
         } catch (Exception e) {
-            Log.w(LOG_TAG, "Missing GET_ACCOUNTS permission.", e);
+            Log.w(LOG_TAG, "Missing GET_ACCOUNTS permission.");
         }
 
         return false;

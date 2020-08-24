@@ -61,4 +61,15 @@ exports.open = function (success, error, args) {
     success();
 };
 
+/**
+ * Convert list of uris to an encoded string.
+ *
+ * @param [ Array<String> ] uris List of uris to encode.
+ *
+ * @return [ String ]
+ */
+exports.encodeURIs = function (uris) {
+    return encodeURIComponent(uris.join(';'));
+};
+
 require('cordova/exec/proxy').add('EmailComposer', exports);
