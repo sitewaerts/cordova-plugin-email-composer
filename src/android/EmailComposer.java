@@ -184,8 +184,8 @@ public class EmailComposer extends CordovaPlugin {
      *
      * @param code The code number of the permission to check for.
      */
-    private void check(int code) {
-        check(getPermission(code));
+    private void check(int code){
+        check(getPermissions(code));
     }
 
     /**
@@ -226,7 +226,7 @@ public class EmailComposer extends CordovaPlugin {
             case 1:
                 return new String[]{READ_EXTERNAL_STORAGE};
             case 2:
-                return new String[]{GET_ACCOUNTS, READ_CONTACTS};
+                return new String[]{GET_ACCOUNTS, READ_CONTACTS}; // see https://stackoverflow.com/a/54941079/4094951
             default:
                 return new String[0];
         }
@@ -237,9 +237,8 @@ public class EmailComposer extends CordovaPlugin {
      *
      * @param result The result to send to the webview.
      */
-    private void sendResult(PluginResult result){
-        if (command != null)
-        {
+    private void sendResult(PluginResult result) {
+        if (command != null) {
             command.sendPluginResult(result);
         }
 
