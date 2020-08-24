@@ -27,34 +27,37 @@
 #pragma mark Public
 
 /**
- * Checks if the mail composer is able to send mails and if an app is available
- * to handle the specified scheme.
- *
- * @param scheme An URL scheme, that defaults to 'mailto:
+ * Checks if the mail composer is able to send mails.
  */
-- (NSArray*) canSendMail:(NSString*)scheme
+- (bool) canSendMail
 {
     NSSharingService* service =
     [NSSharingService sharingServiceNamed:NSSharingServiceNameComposeEmail];
 
-    bool canSendMail = [service canPerformWithItems:@[@"Test"]];
-    bool withScheme  = false;
+    return [service canPerformWithItems:@[@"Test"]];
+}
 
+/**
+ * Checks if an app is available to handle the specified scheme.
+ *
+ * @param scheme An URL scheme, that defaults to 'mailto:
+ */
+- (bool) canOpenScheme:(NSString *)scheme
+{
     if (!scheme) {
         scheme = @"mailto:";
-    } else if (![scheme hasSuffix:@":"]) {
+    } else if (![scheme containsString:@":"]) {
         scheme = [scheme stringByAppendingString:@":"];
     }
 
     NSCharacterSet *set = [NSCharacterSet URLFragmentAllowedCharacterSet];
-    scheme = [[scheme stringByAppendingString:@"test@test.de"]
-                stringByAddingPercentEncodingWithAllowedCharacters:set];
+    scheme = [[scheme stringByAppendingString:@"?test@test.de"]
+              stringByAddingPercentEncodingWithAllowedCharacters:set];
 
     NSURL* url = [NSURL URLWithString:scheme];
     NSURL* app = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url];
-    withScheme = app != NULL;
 
-    return @[@(canSendMail), @(withScheme)];
+    return app != NULL;
 }
 
 /**
@@ -99,47 +102,53 @@
  */
 - (NSURL*) urlFromProperties:(NSDictionary*)props
 {
-    NSString* mailto     = [props objectForKey:@"app"];
-    NSString* query      = @"";
+    NSString* mailto      = [props objectForKey:@"app"];
+    NSMutableArray* parts = [[NSMutableArray alloc] init];
+    NSString* query       = @"";
 
-    NSString* subject    = [props objectForKey:@"subject"];
-    NSString* body       = [props objectForKey:@"body"];
-    NSArray* to          = [props objectForKey:@"to"];
-    NSArray* cc          = [props objectForKey:@"cc"];
-    NSArray* bcc         = [props objectForKey:@"bcc"];
-    NSArray* attachments = [props objectForKey:@"attachments"];
+    NSString* subject     = [props objectForKey:@"subject"];
+    NSString* body        = [props objectForKey:@"body"];
+    NSArray* to           = [props objectForKey:@"to"];
+    NSArray* cc           = [props objectForKey:@"cc"];
+    NSArray* bcc          = [props objectForKey:@"bcc"];
+    NSArray* attachments  = [props objectForKey:@"attachments"];
 
-    NSCharacterSet* cs   = [NSCharacterSet URLHostAllowedCharacterSet];
+    NSCharacterSet* cs    = [NSCharacterSet URLHostAllowedCharacterSet];
 
-    if (![mailto hasSuffix:@":"]) {
-        mailto = [mailto stringByAppendingString:@":"];
+    if (![mailto containsString:@"://"]) {
+        mailto = [mailto stringByAppendingString:@"://"];
     }
 
-    mailto = [mailto stringByAppendingString:
-              [to componentsJoinedByString:@","]];
-
-    if (body.length > 0) {
-        query = [NSString stringWithFormat: @"%@&body=%@", query,
-                 [body stringByAddingPercentEncodingWithAllowedCharacters:cs]];
-    }
-    if (subject.length > 0) {
-        query = [NSString stringWithFormat: @"%@&subject=%@", query,
-                 [subject stringByAddingPercentEncodingWithAllowedCharacters:cs]];
+    if (to.count > 0) {
+        [parts addObject: [NSString stringWithFormat: @"to=%@",
+                           [to componentsJoinedByString:@","]]];
     }
 
     if (cc.count > 0) {
-        query = [NSString stringWithFormat: @"%@&cc=%@",
-                   query, [cc componentsJoinedByString:@","]];
+        [parts addObject: [NSString stringWithFormat: @"cc=%@",
+                           [cc componentsJoinedByString:@","]]];
     }
 
     if (bcc.count > 0) {
-        query = [NSString stringWithFormat: @"%@&bcc=%@",
-                   query, [cc componentsJoinedByString:@","]];
+        [parts addObject: [NSString stringWithFormat: @"bcc=%@",
+                           [bcc componentsJoinedByString:@","]]];
+    }
+
+    if (subject.length > 0) {
+        [parts addObject: [NSString stringWithFormat: @"subject=%@",
+                           [subject stringByAddingPercentEncodingWithAllowedCharacters:cs]]];
+    }
+
+    if (body.length > 0) {
+        [parts addObject: [NSString stringWithFormat: @"body=%@",
+                           [body stringByAddingPercentEncodingWithAllowedCharacters:cs]]];
     }
 
     if (attachments.count > 0) {
         NSLog(@"The 'mailto' URI Scheme (RFC 2368) does not support attachments.");
     }
+
+    query = [parts componentsJoinedByString:@"&"];
 
     if (query.length > 0) {
         query = [@"?" stringByAppendingString:query];

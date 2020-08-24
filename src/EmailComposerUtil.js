@@ -1,5 +1,5 @@
 /*
-Copyright 2013-2015 appPlant UG
+Copyright 2020 sitewaerts GmbH
 
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
@@ -31,9 +31,10 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
      * convert given markup to plain text.
      *
      * @param {String} markupText
+     * @param {boolean} uriDelimiting
      * @return {String} plain text
      */
-    _toPlainText: function(markupText){
+    toPlainText: function(markupText, uriDelimiting){
         if (!markupText)
             return null;
 
@@ -58,8 +59,17 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
                     {
                         // space after url makes url clickable even if its
                         // placed at the end of a line.
-                        // mark url for post processing with surroundLinks()
-                        return content + " _link_start_" + href + "_link_end_ ";
+
+                        if(uriDelimiting)
+                        {
+                            // mark url for post processing with surroundLinks()
+                            return content + " _link_start_" + href + "_link_end_ ";
+                        }
+                        else
+                        {
+                            return content + " " + href + " ";
+                        }
+
                     });
         }
 
@@ -92,11 +102,13 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
             markupText = $('<span>').html(markupText).text();
         }
 
-        return surroundLinks(markupText);
+        if(uriDelimiting)
+            return surroundLinks(markupText);
+        return markupText;
     },
 
-    _isHtml: function (props) {
-        return (props.isHtml == true || props.isHtml == 'true');
+    isHtml: function (props) {
+        return (props.isHtml === true || props.isHtml === 'true');
     },
 
     getFullContentType: function (props) {
@@ -109,50 +121,52 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
         // tell outlook (or others) how to decode the url parameters (UTF-8)
         // and that we want to create a plain text or html email draft
 
-        if (this._isHtml(props))
+        if (this.isHtml(props))
             return 'text/html';
         else
             return 'text/plain';
     },
 
-    getMailToUri: function (props) {
+        /**
+         *
+         * @param {*} props
+         * @param {boolean} appendContentType
+         * @returns {{uri: string, contentType: string, close: close}}
+         */
+    getMailToUri: function (props, appendContentType) {
 
         function appendParam(name, value)
         {
-            if (value == null || value == '')
+            if (value == null || value === '')
                 return '';
             value = ([].concat(value)).join(",");
-            if (value == '')
+            if (value === '')
                 return '';
-
             return '&' + name + "=" + encodeURIComponent(value);
         }
 
-        var isHtml = this._isHtml(props);
+        var isHtml = this.isHtml(props);
+        var body = props.body;
 
         // mailto links don't support html body
         if(isHtml)
-        {
-            // TODO: clone props to avoid modification of function call argument
-            props.body = this._toPlainText(props.body);
-            props.isHtml = false;
-        }
+            body = this.toPlainText(body, true);
 
-        var fullContentType = this.getFullContentType(props);
         var contentType = this.getContentType(props);
         // The URI to launch
         var uriToLaunch = "mailto:" + ([].concat(props.to)).join(",");
 
         var options = '';
 
-        options = options + appendParam('Content-Type', fullContentType);
+        if(appendContentType)
+            options = options + appendParam('Content-Type', this.getFullContentType(props));
 
         options = options + appendParam('subject', props.subject);
         options = options + appendParam('cc', props.cc);
         options = options + appendParam('bcc', props.bcc);
 
         // append body as last param, as it may expire the uri max length
-        options = options + appendParam('body', props.body);
+        options = options + appendParam('body', body);
 
         // TODO: add attachments
 
@@ -194,16 +208,16 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
 
         function appendParam(name, value)
         {
-            if (value == null || value == '')
+            if (value == null || value === '')
                 return '';
             value = ([].concat(value)).join(",\n ");
-            if (value == '')
+            if (value === '')
                 return '';
 
             return name + ": " + value + "\n";
         }
 
-        var isHtml = this._isHtml(props);
+        var isHtml = this.isHtml(props);
         var fullContentType = this.getFullContentType(props);
 
         var emlText = '';

@@ -28,35 +28,44 @@
 #pragma mark Public
 
 /**
- * Checks if the mail composer is able to send mails and if an app is available
- * to handle the specified scheme.
+ * Checks if the mail composer is able to send mails.
+ */
+- (bool) canSendMail
+{
+    return [MFMailComposeViewController canSendMail];
+}
+
+/**
+ * Checks if an app is available to handle the specified scheme.
  *
  * @param scheme An URL scheme, that defaults to 'mailto:
  */
-- (NSArray*) canSendMail:(NSString*)scheme
+- (bool) canOpenScheme:(NSString *)scheme
 {
-    bool canSendMail = [MFMailComposeViewController canSendMail];
-    bool withScheme  = false;
+    __block bool canOpen = false;
+    NSCharacterSet *set  = [NSCharacterSet URLFragmentAllowedCharacterSet];
 
     if (!scheme) {
         scheme = @"mailto:";
-    } else if (![scheme hasSuffix:@":"]) {
+    } else if (![scheme containsString:@":"]) {
         scheme = [scheme stringByAppendingString:@":"];
     }
 
-    NSCharacterSet *set = [NSCharacterSet URLFragmentAllowedCharacterSet];
-    scheme = [[scheme stringByAppendingString:@"test@test.de"]
-                stringByAddingPercentEncodingWithAllowedCharacters:set];
+    scheme = [[scheme stringByAppendingString:@"?test@test.de"]
+              stringByAddingPercentEncodingWithAllowedCharacters:set];
 
-    NSURL *url = [[NSURL URLWithString:scheme]
-                    absoluteURL];
+    NSURL *url = [[NSURL URLWithString:scheme] absoluteURL];
 
-    withScheme = [[UIApplication sharedApplication]
-                   canOpenURL:url];
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
-    NSArray* resultArray = [NSArray arrayWithObjects:@(canSendMail),@(withScheme), nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        canOpen = [[UIApplication sharedApplication] canOpenURL:url];
+        dispatch_semaphore_signal(sema);
+    });
 
-    return resultArray;
+    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+
+    return canOpen;
 }
 
 /**
@@ -76,6 +85,8 @@
 
     draft = [[MFMailComposeViewController alloc] init];
 
+    // Sender
+    [self setSendingEmailAddress:[props objectForKey:@"from"] ofDraft:draft];
     // Subject
     [self setSubject:[props objectForKey:@"subject"] ofDraft:draft];
     // Body (as HTML)
@@ -103,47 +114,53 @@
  */
 - (NSURL*) urlFromProperties:(NSDictionary*)props
 {
-    NSString* mailto     = [props objectForKey:@"app"];
-    NSString* query      = @"";
+    NSString* mailto      = [props objectForKey:@"app"];
+    NSMutableArray* parts = [[NSMutableArray alloc] init];
+    NSString* query       = @"";
 
-    NSString* subject    = [props objectForKey:@"subject"];
-    NSString* body       = [props objectForKey:@"body"];
-    NSArray* to          = [props objectForKey:@"to"];
-    NSArray* cc          = [props objectForKey:@"cc"];
-    NSArray* bcc         = [props objectForKey:@"bcc"];
-    NSArray* attachments = [props objectForKey:@"attachments"];
+    NSString* subject     = [props objectForKey:@"subject"];
+    NSString* body        = [props objectForKey:@"body"];
+    NSArray* to           = [props objectForKey:@"to"];
+    NSArray* cc           = [props objectForKey:@"cc"];
+    NSArray* bcc          = [props objectForKey:@"bcc"];
+    NSArray* attachments  = [props objectForKey:@"attachments"];
 
-    NSCharacterSet* cs   = [NSCharacterSet URLHostAllowedCharacterSet];
+    NSCharacterSet* cs    = [NSCharacterSet URLHostAllowedCharacterSet];
 
-    if (![mailto hasSuffix:@":"]) {
-        mailto = [mailto stringByAppendingString:@":"];
+    if (![mailto containsString:@"://"]) {
+        mailto = [mailto stringByAppendingString:@"://"];
     }
 
-    mailto = [mailto stringByAppendingString:
-              [to componentsJoinedByString:@","]];
-
-    if (body.length > 0) {
-        query = [NSString stringWithFormat: @"%@&body=%@", query,
-                 [body stringByAddingPercentEncodingWithAllowedCharacters:cs]];
-    }
-    if (subject.length > 0) {
-        query = [NSString stringWithFormat: @"%@&subject=%@", query,
-                 [subject stringByAddingPercentEncodingWithAllowedCharacters:cs]];
+    if (to.count > 0) {
+        [parts addObject: [NSString stringWithFormat: @"to=%@",
+                           [to componentsJoinedByString:@","]]];
     }
 
     if (cc.count > 0) {
-        query = [NSString stringWithFormat: @"%@&cc=%@",
-                   query, [cc componentsJoinedByString:@","]];
+        [parts addObject: [NSString stringWithFormat: @"cc=%@",
+                           [cc componentsJoinedByString:@","]]];
     }
 
     if (bcc.count > 0) {
-        query = [NSString stringWithFormat: @"%@&bcc=%@",
-                   query, [cc componentsJoinedByString:@","]];
+        [parts addObject: [NSString stringWithFormat: @"bcc=%@",
+                           [bcc componentsJoinedByString:@","]]];
+    }
+
+    if (subject.length > 0) {
+        [parts addObject: [NSString stringWithFormat: @"subject=%@",
+                           [subject stringByAddingPercentEncodingWithAllowedCharacters:cs]]];
+    }
+
+    if (body.length > 0) {
+        [parts addObject: [NSString stringWithFormat: @"body=%@",
+                           [body stringByAddingPercentEncodingWithAllowedCharacters:cs]]];
     }
 
     if (attachments.count > 0) {
         NSLog(@"The 'mailto' URI Scheme (RFC 2368) does not support attachments.");
     }
+
+    query = [parts componentsJoinedByString:@"&"];
 
     if (query.length > 0) {
         query = [@"?" stringByAppendingString:query];
@@ -156,6 +173,20 @@
 
 #pragma mark -
 #pragma mark Private
+
+/**
+ * Sets the subject of the email draft.
+ *
+ * @param subject The subject
+ * @param draft   The email composer view
+ */
+- (void) setSendingEmailAddress:(NSString*)from
+                        ofDraft:(MFMailComposeViewController*)draft
+{
+    if (@available(iOS 11.0, *)) {
+        [draft setPreferredSendingEmailAddress:from];
+    }
+}
 
 /**
  * Sets the subject of the email draft.
@@ -227,22 +258,23 @@
 - (void) setAttachments:(NSArray*)attatchments
                 ofDraft:(MFMailComposeViewController*)draft
 {
-    if (attatchments)
+    if (!attatchments) return;
+
+    for (NSString* path in attatchments)
     {
-        for (NSString* path in attatchments)
-        {
-            NSData* data = [self getDataForAttachmentPath:path];
+        NSData* data = [self getDataForAttachmentPath:path];
 
-            NSString* basename = [self getBasenameFromAttachmentPath:path];
-            NSString* pathExt  = [basename pathExtension];
-            NSString* fileName = [basename pathComponents].lastObject;
-            NSString* mimeType = [self getMimeTypeFromFileExtension:pathExt];
+        if (!data) continue;
 
-            // Couldn't find mimeType, must be some type of binary data
-            if (mimeType == nil) mimeType = @"application/octet-stream";
+        NSString* basename = [self getBasenameFromAttachmentPath:path];
+        NSString* pathExt  = [basename pathExtension];
+        NSString* fileName = [basename pathComponents].lastObject;
+        NSString* mimeType = [self getMimeTypeFromFileExtension:pathExt];
 
-            [draft addAttachmentData:data mimeType:mimeType fileName:fileName];
-        }
+        // Couldn't find mimeType, must be some type of binary data
+        if (mimeType == nil) mimeType = @"application/octet-stream";
+
+        [draft addAttachmentData:data mimeType:mimeType fileName:fileName];
     }
 }
 
@@ -414,7 +446,7 @@
                                             withTemplate:@""];
 
     NSData* data = [[NSData alloc] initWithBase64EncodedString:dataString
-                                                       options:0];
+                                                       options:NSDataBase64DecodingIgnoreUnknownCharacters];
 
     return data;
 }

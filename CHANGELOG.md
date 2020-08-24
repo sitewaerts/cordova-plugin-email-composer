@@ -1,6 +1,59 @@
 
 ## ChangeLog
 
+#### Version 0.9.2 (24.01.2019)
+- Fix package android.support.v4.content does not exist
+
+#### Version 0.9.1 (13.12.2018)
+- Fix line breaks (\r\n) on Android
+
+#### Version 0.9.0 (13.12.2018)
+- [feature:] Added `getClients` that returns a list of available email clients (Android)
+- [__change__]: Replace `isAvailable` through `hasClient` and `hasAccount`.
+- [__change__]: Plugin does not add any permissions by itself like `GET_ACCOUNTS` or `READ_EXTERNAL_STORAGE`.
+- [__change__]: `isAvailable` does not request for missing permission (`GET_ACCOUNTS`).
+- [__change__]: `hasPermission` takes 3 arguments now. The first one has to be a value of `cordova.plugins.email.permission`.
+- [__change__]: `requestPermission` takes 3 arguments now. The first one has to be a value of `cordova.plugins.email.permission`.
+- [__change__]: Remove support lib from being installed (Android).
+- [__change__]: Remove deprecated namespace `plugin.email`.
+- [__change__]: Remove deprecated support for `isHTML`.
+- [__change__]: Change default value for `isHtml` to `false`.
+- [__change__]: Remove Android specific `type` property.
+- [enhancement]: Skip chooser if there's only the default app (#302)
+- [enhancement]: Improve chooser to only display email clients.
+- [enhancement]: Add `from` to specify the sending email account.
+- [bugfix:] Do not open old email draft [fixes #303]
+
+#### Version 0.8.15 (08.02.2018)
+- Fix iOS not working if `app:` wasn't specified.
+- Fix `attachments:` to accept a string.
+
+#### Version 0.8.14 (31.01.2018)
+- Fix wrong uri encoding for browser platform.
+
+#### Version 0.8.13 (25.01.2018)
+- Fix potential wrong result for isAvailable on iOS+OSX by using scheme other then `mailto:`
+- Fix open app from background thread by using scheme other then `mailto:`
+
+#### Version 0.8.12 (09.01.2018)
+- Internal code refactoring
+- Added `type` property to specify the content type (#283)
+
+#### Version 0.8.11 (25.10.2017)
+- Apply URL encoding when constructing mailto: link (#273)
+
+#### Version 0.8.10 (25.09.2017)
+- Open gmail on ios and macos [fixes #272]
+- Added alias for outlook
+- Fix warnings with iOS 11
+
+#### Version 0.8.9 (14.09.2017)
+- Fix opening email with file attachment causes app crash on Android 8 (#270)
+
+#### Version 0.8.8 (07.09.2017)
+- Fix crash on iOS if attachment could not be found
+- Fix wrong plugin ID in package.json
+
 #### Version 0.8.7 (26.06.2017)
 - Add support for an app:// URL #158 (Android)
 - Add support for an app:// (iOS, OSX, Windows)

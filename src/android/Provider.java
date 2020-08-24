@@ -17,16 +17,10 @@
  under the License.
  */
 
-@interface APPEmailComposerImpl : NSObject
+package de.appplant.cordova.emailcomposer;
 
-// Checks if the mail composer is able to send mails
-- (bool) canSendMail;
-// Checks if the mail composer is able to open the specified mail client
-- (bool) canOpenScheme:(NSString*)scheme;
-// Creates an mailto-url-sheme
-- (NSURL*) urlFromProperties:(NSDictionary*)props;
-// Instantiates an email composer view
-- (NSArray*) mailComposerFromProperties:(NSDictionary*)props
-                             delegateTo:(id)receiver;
+import android.support.v4.content.FileProvider;
 
-@end
+public class Provider extends FileProvider {
+    // Nothing to do here
+}

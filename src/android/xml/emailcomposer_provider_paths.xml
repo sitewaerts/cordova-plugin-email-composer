@@ -1,4 +1,6 @@
-/*
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
  Licensed to the Apache Software Foundation (ASF) under one
  or more contributor license agreements.  See the NOTICE file
  distributed with this work for additional information
@@ -15,18 +17,17 @@
  KIND, either express or implied.  See the License for the
  specific language governing permissions and limitations
  under the License.
- */
+-->
 
-@interface APPEmailComposerImpl : NSObject
-
-// Checks if the mail composer is able to send mails
-- (bool) canSendMail;
-// Checks if the mail composer is able to open the specified mail client
-- (bool) canOpenScheme:(NSString*)scheme;
-// Creates an mailto-url-sheme
-- (NSURL*) urlFromProperties:(NSDictionary*)props;
-// Instantiates an email composer view
-- (NSArray*) mailComposerFromProperties:(NSDictionary*)props
-                             delegateTo:(id)receiver;
-
-@end
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- cordova.file.dataDirectory -->
+    <files-path name="files" path="." />
+    <!-- cordova.file.cacheDirectory -->
+    <cache-path name="cache" path="." />
+    <!-- cordova.file.externalDataDirectory -->
+    <external-files-path name="external-files" path="." />
+    <!-- cordova.file.externalCacheDirectory -->
+    <external-cache-path name="external-cache" path="." />
+    <!-- cordova.file.externalRootDirectory -->
+    <external-path name="external" path="." />
+</paths>

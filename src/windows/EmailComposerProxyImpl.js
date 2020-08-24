@@ -1,24 +1,24 @@
 /*
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
+ Licensed to the Apache Software Foundation (ASF) under one
+ or more contributor license agreements.  See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership.  The ASF licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License.  You may obtain a copy of the License at
 
  http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
-*/
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on an
+ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ KIND, either express or implied.  See the License for the
+ specific language governing permissions and limitations
+ under the License.
+ */
 
-var proxy = require('cordova-plugin-email-composer.EmailComposerProxy'),
-    impl  = proxy.impl = {},
+var proxy   = require('cordova-plugin-email-composer.EmailComposerProxy'),
+    impl    = proxy.impl = {},
     WinMail = Windows.ApplicationModel.Email;
 
 /**
@@ -34,7 +34,9 @@ impl.getDraftWithProperties = function (props) {
     return new WinJS.Promise(function (complete, error) {
         var mail = new WinMail.EmailMessage();
 
-        // subject
+        // From sender
+        me.setSendingEmailAddress(props.from, mail);
+        // Subject
         me.setSubject(props.subject, mail);
         // To recipients
         me.setRecipients(props.to, mail.to);
@@ -62,95 +64,10 @@ impl.getDraftWithProperties = function (props) {
  *
  * @return [ Windows.Foundation.Uri ]
  */
-impl.getMailTo = function (props) {
-        function appendParam(name, value)
-        {
-            if (value == null || value == '')
-                return '';
-            value = ([].concat(value)).join(",");
-            if (value == '')
-                return '';
-            return '&' + name + "=" + encodeURIComponent(value);
-        }
-
-        function toPlainText(markupText)
-        {
-            if (!markupText)
-                return null;
-
-            function replaceBodyTag(markupText, tagName, replacement)
-            {
-                markupText = markupText.replace(new RegExp("<" + tagName
-                        + " ?[^>]*>", "g"), "");
-                markupText = markupText.replace(new RegExp("</" + tagName + ">",
-                        "g"), replacement);
-                return markupText;
-            }
-
-            function replaceBrTag(markupText)
-            {
-                return markupText.replace(/\s*<br>\s*/g, "\n");
-            }
-
-            function replaceAnchorTag(markupText)
-            {
-                return markupText.replace(/<a [^>]*href="(.*)"[^>]*> *(.*) *<\/a>/g,
-                        function (all, href, content)
-                        {
-                            return content + " " + href + " ";
-                        });
-            }
-
-            markupText = markupText.replace(/\s*\n\s*/g, " ");
-            markupText = markupText.replace(/>\s*</g, "><");
-
-            markupText = replaceAnchorTag(markupText);
-            markupText = replaceBrTag(markupText);
-
-            markupText = replaceBodyTag(markupText, "h1", "\n\n\n");
-            markupText = replaceBodyTag(markupText, "h2", "\n\n");
-            markupText = replaceBodyTag(markupText, "p", "\n\n");
-
-            if($)
-            {
-                // use jquery to expand all entities and remove all tags
-                return $('<span>').html(markupText).text();
-            }
-            else
-            {
-                return markupText;
-            }
-        }
-
-
-        var body = props.body;
-        if (props.isHtml == true || props.isHtml == 'true')
-        {
-            // mailto links do not support markup text
-            body = toPlainText(body);
-        }
-
-        // The URI to launch
-        var uriToLaunch = "mailto:" + ([].concat(props.to)).join(",");
-
-        var options = '';
-        options = options + appendParam('subject', props.subject);
-        options = options + appendParam('cc', props.cc);
-        options = options + appendParam('bcc', props.bcc);
-        // append body as last param, as it may expire the uri max length
-        options = options + appendParam('body', body);
-
-        if (options !== '')
-        {
-            options = '?' + options.substring(1);
-            uriToLaunch = uriToLaunch + options;
-        }
-
-        // Create a Uri object from a URI string
-        var uri = new Windows.Foundation.Uri(uriToLaunch);
-
-        return uri;
-	};
+impl.getMailTo = function (props){
+    var mailto = proxy.commonUtil.getMailToUri(props, false);
+    return new Windows.Foundation.Uri(mailto.uri);
+};
 
 /**
     * opening email draft from eml file ist not supported by some email apps
@@ -168,7 +85,7 @@ impl.getMailTo = function (props) {
        if(!props.emlFile)
            return false;
 
-       return props.emlFile == true || props.emlFile == 'true';
+       return props.emlFile === true || props.emlFile === 'true';
 };
 
    /**
@@ -225,11 +142,11 @@ impl.setSubject = function (subject, draft) {
 /**
  * Setter for the body.
  *
- * @param [ String ]  body
+ * @param [ String ]  body   The email body.
  * @param [ Boolean ] isHTML Indicates the encoding (HTML or plain text)
  * @param [ Email.EmailMessage ] draft
  *
- * @return [ Void ]
+ * @return [ WinJS.Promise ]
  */
 impl.setBody = function (body, isHTML, draft) {
     if(!isHTML)
@@ -281,6 +198,18 @@ impl.setBody = function (body, isHTML, draft) {
 
     });
 
+};
+
+/**
+ * Setter for the sending email address.
+ *
+ * @param [ String ]             from  The sending email address.
+ * @param [ Email.EmailMessage ] draft
+ *
+ * @return [ Void ]
+ */
+impl.setSendingEmailAddress = function (from, draft) {
+    draft.sender = new WinMail.EmailRecipient(from);
 };
 
 /**
