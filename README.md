@@ -100,10 +100,17 @@ cordova.plugins.email.open({ app: 'gmail', subject: 'Sent from Gmail' });
 
 #### HTML and CSS
 
-Only the built-in email app for iOS does support HTML and CSS. Some Android clients support rich formatted text.
+The built-in email app for iOS does support HTML and CSS. 
+Some Android clients support rich formatted text.
 On Windows Outlook supports HTML and CSS. 
 
 Use `isHtml` with caution! It's disabled by default.
+
+To pass HTML and CSS Emails to Microsoft Outlook from a windows app pass the following properties to `open`: 
+```javascript
+{ isHtml: true, emlFile : true}
+```
+The plugin will write the email draft to a local eml file and pass that files uri over to outlook.
 
 #### Attach Base64 encoded content
 The code below shows how to attach an base64 encoded image which will be added as a image with the name *icon.png*.
