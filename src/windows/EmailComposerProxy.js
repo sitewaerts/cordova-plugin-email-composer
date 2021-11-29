@@ -19,8 +19,16 @@
  under the License.
  */
 
-var WinLauncher = Windows.System.Launcher,
-    WinMail     = Windows.ApplicationModel.Email;
+var WinLauncher = Windows.System.Launcher;
+
+
+/*
+ Access to Windows.ApplicationModel.Email may be restricted and/or require additional capabilities
+ see https://docs.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations
+ Native code may throw uncatched exceptions when accessing these apis and those may suddenly crash the app
+ This is why we cannot use WinMail in this plugin anymore
+ */
+
 
 /**
  * Tries to find out if the device has an configured email account.
@@ -68,33 +76,6 @@ exports.open = function (success, error, args) {
                     error(e);
     };
 
-    /**
-     * Access to Windows.ApplicationModel.Email may be restricted and/or require additional capabilities
-     * see https://docs.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations
-     *
-     */
-
-    // if (WinMail) {
-    //         impl.getDraftWithProperties(props)
-    //             .then(WinMail.EmailManager.showComposeNewEmailAsync, function (e) {
-    //                 // could not compose
-    //                 if(props.isHtml)
-    //                 {
-    //                     // may be compose failed because this app is compiled for win8.1 but running on win10
-    //                     //  --> in this special case WinMail is available, but the EmailMessage.setBodyStream api is not fully supported
-    //                     // retry via eml file
-    //                     if(console)
-    //                         console.warn("WinMail.EmailManager.showComposeNewEmailAsync failed, trying launcher now.");
-    //                     sendViaLauncher();
-    //                 }
-    //                 else {
-    //                     onError(e);
-    //                 }
-    //             })
-    //             .done(success, onError);
-    // } else{
-    //     sendViaLauncher();
-    // }
     sendViaLauncher();
 
     function sendViaLauncher()
