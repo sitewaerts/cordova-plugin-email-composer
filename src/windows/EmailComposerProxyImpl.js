@@ -16,17 +16,18 @@
  specific language governing permissions and limitations
  under the License.
  */
-
+/* globals Windows: true */
 var proxy   = require('cordova-plugin-email-composer.EmailComposerProxy'),
     impl    = proxy.impl = {},
     WinMail = Windows.ApplicationModel.Email;
 
+
 /**
  * The Email with the containing properties.
  *
- * @param [ Object ] props Properties like subject.
+ * @param {Object} props Properties like subject.
  *
- * @return [ Email.EmailMessage ]
+ * @return {Windows.ApplicationModel.Email.EmailMessage}
  */
 impl.getDraftWithProperties = function (props) {
     var me = this;
@@ -60,9 +61,9 @@ impl.getDraftWithProperties = function (props) {
 /**
  * Construct a mailto: string based on the provided properties.
  *
- * @param [ Object ] props Properties like subject.
+ * @param {Object} props Properties like subject.
  *
- * @return [ Windows.Foundation.Uri ]
+ * @return {Windows.Foundation.Uri}
  */
 impl.getMailTo = function (props){
     var mailto = proxy.commonUtil.getMailToUri(props, false);
@@ -130,10 +131,9 @@ impl.getMailTo = function (props){
 /**
  * Setter for the subject.
  *
- * @param [ String ]             subject
- * @param [ Email.EmailMessage ] draft
- *
- * @return [ Void ]
+ * @param {string}             subject
+ * @param {Email.EmailMessage} draft
+ * @void
  */
 impl.setSubject = function (subject, draft) {
     draft.subject = subject;
@@ -142,11 +142,11 @@ impl.setSubject = function (subject, draft) {
 /**
  * Setter for the body.
  *
- * @param [ String ]  body   The email body.
- * @param [ Boolean ] isHTML Indicates the encoding (HTML or plain text)
- * @param [ Email.EmailMessage ] draft
+ * @param {string}  body   The email body.
+ * @param {boolean} isHTML Indicates the encoding (HTML or plain text)
+ * @param {Email.EmailMessage} draft
  *
- * @return [ WinJS.Promise ]
+ * @return {WinJS.Promise}
  */
 impl.setBody = function (body, isHTML, draft) {
     if(!isHTML)
@@ -178,21 +178,21 @@ impl.setBody = function (body, isHTML, draft) {
                 var stream = writer.detachStream();
                 stream.seek(0);
                 writer.close();
-                // will fail if app is compiled for win8.1
+                // will fail if app is compiled for win8.1 (WinRTError: Schnittstelle nicht unterstützt)
                 draft.setBodyStream(
                         Windows.ApplicationModel.Email.EmailMessageBodyKind.html,
                         stream);
                 return draft;
             }).done(complete, function(e){
                 if (console)
-                    console.log("cannot set html body stream", e);
+                    console.warn("cannot set html body stream", e);
                 error(e);
             });
         }
         catch (e)
         {
             if (console)
-                console.log("cannot set html body stream", e);
+                console.warn("cannot set html body stream", e);
             error(e);
         }
 
@@ -209,6 +209,7 @@ impl.setBody = function (body, isHTML, draft) {
  * @return [ Void ]
  */
 impl.setSendingEmailAddress = function (from, draft) {
+    if(from && from.length > 0)
     draft.sender = new WinMail.EmailRecipient(from);
 };
 

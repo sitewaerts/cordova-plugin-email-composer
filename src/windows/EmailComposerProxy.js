@@ -51,11 +51,11 @@ exports.client = function (success, error, args) {
 /**
  * Displays the email composer pre-filled with data.
  *
- * @param [ Function ] success Success callback
- * @param [ Function ] error   Error callback
- * @param [ Array ]    args    Interface arguments
+ * @param {function} success Success callback
+ * @param {function} error   Error callback
+ * @param {Array}    args    Interface arguments
  *
- * @return [ Void ]
+ * @void
  */
 exports.open = function (success, error, args) {
     var props = args[0],
@@ -68,25 +68,34 @@ exports.open = function (success, error, args) {
                     error(e);
     };
 
-    if (WinMail) {
-            impl.getDraftWithProperties(props)
-                .then(WinMail.EmailManager.showComposeNewEmailAsync, function (e) {
-                    // could not compose
-                    if(props.isHtml)
-                    {
-                        // may be compose failed because this app is compiled for win8.1 but running on win10
-                        //  --> in this special case WinMail is available, but the EmailMessage.setBodyStream api is not fully supported
-                        // retry via eml file
-                        sendViaLauncher();
-                    }
-                    else {
-                        onError(e);
-                    }
-                })
-                .done(success, onError);
-    } else{
-        sendViaLauncher();
-    }
+    /**
+     * Access to Windows.ApplicationModel.Email may be restricted and/or require additional capabilities
+     * see https://docs.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations
+     *
+     */
+
+    // if (WinMail) {
+    //         impl.getDraftWithProperties(props)
+    //             .then(WinMail.EmailManager.showComposeNewEmailAsync, function (e) {
+    //                 // could not compose
+    //                 if(props.isHtml)
+    //                 {
+    //                     // may be compose failed because this app is compiled for win8.1 but running on win10
+    //                     //  --> in this special case WinMail is available, but the EmailMessage.setBodyStream api is not fully supported
+    //                     // retry via eml file
+    //                     if(console)
+    //                         console.warn("WinMail.EmailManager.showComposeNewEmailAsync failed, trying launcher now.");
+    //                     sendViaLauncher();
+    //                 }
+    //                 else {
+    //                     onError(e);
+    //                 }
+    //             })
+    //             .done(success, onError);
+    // } else{
+    //     sendViaLauncher();
+    // }
+    sendViaLauncher();
 
     function sendViaLauncher()
     {
