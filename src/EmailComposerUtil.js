@@ -1,3 +1,5 @@
+// noinspection ES6ConvertVarToLetConst
+
 /*
 Copyright 2020 sitewaerts GmbH
 
@@ -19,13 +21,29 @@ specific language governing permissions and limitations
 under the License.
 */
 
-var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
 
 /**
- *
- * @type {{_toPlainText: Function, _isHtml: Function, getFullContentType: Function, getContentType: Function, getMailToUri: Function, supportsEMLUri: Function, getEMLUri: Function, getEMLContent: Function}}
+ * @typedef {Object} LaunchInfo
+ * @property {()=>void} close
  */
-	proxy.commonUtil = {
+
+/**
+ * @typedef {LaunchInfo} LaunchInfoUri
+ * @property {string} uri
+ * @property {string} contentType
+ */
+
+/**
+ * @typedef {LaunchInfo} LaunchInfoText
+ * @property {string} text
+ * @property {string} contentType
+ */
+
+var jQuery = window['$'];
+
+
+// noinspection JSUnusedGlobalSymbols
+var util = {
 
     /**
      * convert given markup to plain text.
@@ -34,56 +52,75 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
      * @param {boolean} uriDelimiting
      * @return {String} plain text
      */
-    toPlainText: function(markupText, uriDelimiting){
+    toPlainText: function (markupText, uriDelimiting)
+    {
         if (!markupText)
             return null;
 
+        /**
+         * @param {string} markupText
+         * @param {string} tagName
+         * @param {string} replacement
+         * @return {string}
+         */
         function replaceBodyTag(markupText, tagName, replacement)
         {
             markupText = markupText.replace(new RegExp("<" + tagName
-                    + " ?[^>]*>", "g"), "");
+                + " ?[^>]*>", "g"), "");
             markupText = markupText.replace(new RegExp("</" + tagName + ">",
-                    "g"), replacement);
+                "g"), replacement);
             return markupText;
         }
 
+        /**
+         * @param {string} markupText
+         * @return {string}
+         */
         function replaceBrTag(markupText)
         {
             return markupText.replace(/\s*<br>\s*/g, "\n");
         }
 
+        /**
+         * @param {string} markupText
+         * @return {string}
+         */
         function replaceAnchorTag(markupText)
         {
             return markupText.replace(/<a [^>]*href="(.*)"[^>]*> *(.*) *<\/a>/g,
-                    function (all, href, content)
+                function (all, href, content)
+                {
+                    // space after url makes url clickable even if its
+                    // placed at the end of a line.
+
+                    if (uriDelimiting)
                     {
-                        // space after url makes url clickable even if its
-                        // placed at the end of a line.
+                        // mark url for post processing with surroundLinks()
+                        return content + " _link_start_" + href + "_link_end_ ";
+                    }
+                    else
+                    {
+                        return content + " " + href + " ";
+                    }
 
-                        if(uriDelimiting)
-                        {
-                            // mark url for post processing with surroundLinks()
-                            return content + " _link_start_" + href + "_link_end_ ";
-                        }
-                        else
-                        {
-                            return content + " " + href + " ";
-                        }
-
-                    });
+                });
         }
 
+        /**
+         * @param {string} markupText
+         * @return {string}
+         */
         function surroundLinks(markupText)
         {
             return markupText.replace(/_link_start_(.*)_link_end_/g,
-                    function (all, url)
-                    {
-                        // brackets around the url prevent line breaks in long
-                        // urls in many email clients.
-                        // see http://www.ietf.org/rfc/rfc2396.txt
-                        // Section E., "Recommendations for Delimiting URI in Context".
-                        return "<" + url + ">";
-                    });
+                function (all, url)
+                {
+                    // brackets around the url prevent line breaks in long
+                    // urls in many email clients.
+                    // see http://www.ietf.org/rfc/rfc2396.txt
+                    // Section E., "Recommendations for Delimiting URI in Context".
+                    return "<" + url + ">";
+                });
         }
 
         markupText = markupText.replace(/\s*\n\s*/g, " ");
@@ -96,28 +133,56 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
         markupText = replaceBodyTag(markupText, "h2", "\n\n");
         markupText = replaceBodyTag(markupText, "p", "\n\n");
 
-        if($)
+        if (jQuery)
         {
             // use jquery to expand all entities and remove all tags
-            markupText = $('<span>').html(markupText).text();
+            markupText = jQuery('<div>').html(markupText).text();
         }
 
-        if(uriDelimiting)
+        if (uriDelimiting)
             return surroundLinks(markupText);
         return markupText;
     },
 
-    isHtml: function (props) {
-        return (props.isHtml === true || props.isHtml === 'true');
+    /**
+     *
+     * @param {string} value
+     * @return {boolean}
+     */
+    isTrue: function (value)
+    {
+        return (value === true || value === 'true');
     },
 
-    getFullContentType: function (props) {
+    /**
+     *
+     * @param {*} props
+     * @return {boolean}
+     */
+    isHtml: function (props)
+    {
+        return this.isTrue(props.isHtml);
+    },
+
+    /**
+     *
+     * @param {*} props
+     * @return {string}
+     */
+    getFullContentType: function (props)
+    {
         // tell outlook (or others) how to decode the url parameters (UTF-8)
         // and that we want to create a plain text or html email draft
         return this.getContentType(props) + '; charset=utf-8';
     },
 
-    getContentType: function (props) {
+    /**
+     *
+     * @param {*} props
+     * @return {string}
+     */
+    getContentType: function (props)
+    {
         // tell outlook (or others) how to decode the url parameters (UTF-8)
         // and that we want to create a plain text or html email draft
 
@@ -127,13 +192,14 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
             return 'text/plain';
     },
 
-        /**
-         *
-         * @param {*} props
-         * @param {boolean} appendContentType
-         * @returns {{uri: string, contentType: string, close: close}}
-         */
-    getMailToUri: function (props, appendContentType) {
+    /**
+     *
+     * @param {*} props
+     * @param {boolean} appendContentType
+     * @returns {LaunchInfoUri}
+     */
+    getMailToUri: function (props, appendContentType)
+    {
 
         function appendParam(name, value)
         {
@@ -149,7 +215,7 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
         var body = props.body;
 
         // mailto links don't support html body
-        if(isHtml)
+        if (isHtml)
             body = this.toPlainText(body, true);
 
         var contentType = this.getContentType(props);
@@ -158,7 +224,7 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
 
         var options = '';
 
-        if(appendContentType)
+        if (appendContentType)
             options = options + appendParam('Content-Type', this.getFullContentType(props));
 
         options = options + appendParam('subject', props.subject);
@@ -168,7 +234,7 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
         // append body as last param, as it may expire the uri max length
         options = options + appendParam('body', body);
 
-        // TODO: add attachments
+        // cannot add attachments
 
         if (options !== '')
         {
@@ -177,18 +243,40 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
         }
 
         return {
-            uri : uriToLaunch,
-            contentType : contentType,
-            close : function(){}
+            uri: uriToLaunch,
+            contentType: contentType,
+            close: function ()
+            {
+            }
         };
     },
 
-    supportsEMLUri: function () {
-        return (window.URL || window.webkitURL) && Blob ? true : false
+    /**
+     * could be used for browser
+     *
+     * eml files are supported by
+     * - Outlook, Outlook Express
+     * - Apple Mail
+     * - Thunderbird
+     *
+     * eml files are not supported by
+     * - windows mail app
+     *
+     * @return {boolean}
+     */
+    supportsEMLUri: function ()
+    {
+        return !!((window.URL || window.webkitURL) && Blob)
     },
 
-    getEMLUri: function (props) {
-
+    /**
+     * could be used for browser
+     * creates an blob url pointing to the email draft in eml format
+     * @param {*} props
+     * @return {LaunchInfoUri}
+     */
+    getEMLUri: function (props)
+    {
         var eml = this.getEMLContent(props);
 
         var URL = window.URL || window.webkitURL;
@@ -196,16 +284,31 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
         var url = URL.createObjectURL(blob);
 
         return {
-            uri : url,
-            contentType : eml.contentType,
-            close : function(){
+            uri: url,
+            contentType: eml.contentType,
+            close: function ()
+            {
                 URL.revokeObjectURL(url);
                 eml.close();
             }
         };
     },
-    getEMLContent: function (props) {
+    /**
+     * see https://docs.fileformat.com/email/eml/
+     * see https://github.com/mikel/mail/tree/master/spec/fixtures
+     *
+     * @param {*} props
+     * @return {LaunchInfoText}
+     */
+    getEMLContent: function (props)
+    {
 
+        /**
+         *
+         * @param {string} name
+         * @param {string | Array<string> | null} value
+         * @return {string}
+         */
         function appendParam(name, value)
         {
             if (value == null || value === '')
@@ -230,13 +333,13 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
         emlText = emlText + appendParam('Content-Type', fullContentType);
         emlText = emlText + "\n";
 
-        if(isHtml)
+        if (isHtml)
         {
-            emlText = emlText + "<html>\n";
-            emlText = emlText + "<body>\n";
-            emlText = emlText + props.body + "\n";
-            emlText = emlText + "</body>\n";
-            emlText = emlText + "</html>";
+            emlText = emlText + '<html lang="en">\n';
+            emlText = emlText + '<body>\n';
+            emlText = emlText + props.body + '\n';
+            emlText = emlText + '</body>\n';
+            emlText = emlText + '</html>';
         }
         else
         {
@@ -246,11 +349,15 @@ var proxy = require('cordova-plugin-email-composer.EmailComposerProxy');
         //TODO: add attachments
 
         return {
-            text : emlText,
-            contentType : 'message/rfc822',
-            close : function(){}
+            text: emlText,
+            contentType: 'message/rfc822',
+            close: function ()
+            {
+            }
         };
     }
-
 };
+
+module.exports = util;
+
 

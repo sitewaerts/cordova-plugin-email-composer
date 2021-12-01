@@ -1,3 +1,5 @@
+// noinspection ES6ConvertVarToLetConst
+
 /*
  Licensed to the Apache Software Foundation (ASF) under one
  or more contributor license agreements.  See the NOTICE file
@@ -17,59 +19,54 @@
  under the License.
  */
 
+var util = cordova.require('cordova-plugin-email-composer.EmailComposerUtil');
+
+var proxy = {};
+
 /**
  * Tries to find out if the device has an configured email account.
  *
- * @param [ Function ] success Success callback
- * @param [ Function ] error   Error callback
- * @param [ Array ]    args    Interface arguments
+ * @param {function} success Success callback
+ * @param {function} error Error callback
+ * @param {Array} args Interface arguments
  *
- * @return [ Void ]
+ * @void
  */
-exports.account = function (success, error, args) {
-    success(null);
+proxy.account = function (success, error, args) {
+    var app = args[0]
+    success(app === 'mailto:' || app === 'mailto' ? true : null);
+
 };
 
 /**
  * Tries to find out if the device has an installed email client.
  *
- * @param [ Function ] success Success callback
- * @param [ Function ] error   Error callback
- * @param [ Array ]    args    Interface arguments
+ * @param {function} success Success callback
  *
- * @return [ Void ]
+ * @void
  */
-exports.client = function (success, error, args) {
+proxy.client = function (success) {
     success(null);
 };
 
 /**
  * Displays the email composer pre-filled with data.
  *
- * @param [ Function ] success Success callback
- * @param [ Function ] error   Error callback
- * @param [ Array ]    args    Interface arguments
+ * @param {function} success Success callback
+ * @param {function} error Error callback
+ * @param {Array} args Interface arguments
  *
- * @return [ Void ]
+ * @void
  */
-exports.open = function (success, error, args) {
+proxy.open = function (success, error, args) {
     var props   = args[0];
 
-    var mailTo = exports.commonUtil.getMailToUri(props, true);
+    // TODO: emlFile support incl. attachments
+
+    var mailTo = util.getMailToUri(props, true);
     window.location.href = mailTo.uri;
 
     success();
 };
 
-/**
- * Convert list of uris to an encoded string.
- *
- * @param [ Array<String> ] uris List of uris to encode.
- *
- * @return [ String ]
- */
-exports.encodeURIs = function (uris) {
-    return encodeURIComponent(uris.join(';'));
-};
-
-require('cordova/exec/proxy').add('EmailComposer', exports);
+cordova.require('cordova/exec/proxy').add('EmailComposer', proxy);

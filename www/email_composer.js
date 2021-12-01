@@ -1,3 +1,5 @@
+// noinspection ES6ConvertVarToLetConst
+
 /*
  Licensed to the Apache Software Foundation (ASF) under one
  or more contributor license agreements.  See the NOTICE file
@@ -17,24 +19,34 @@
  under the License.
  */
 
-var exec      = require('cordova/exec'),
-    ua        = navigator.userAgent.toLowerCase(),
+
+var exec = cordova.require('cordova/exec'),
+    ua = navigator.userAgent.toLowerCase(),
     isAndroid = !window.Windows && ua.indexOf('android') > -1,
-    mailto    = 'mailto:';
+    mailto = 'mailto:';
+
+/**
+ * public plugin api
+ */
+var plugin = {};
 
 /**
  * List of all registered mail app aliases.
+ * @readonly
+ * @type {Record<string, string>}
  */
-exports.aliases = {
-    gmail:   isAndroid ? 'com.google.android.gm' : 'googlegmail://co',
+plugin.aliases = {
+    gmail: isAndroid ? 'com.google.android.gm' : 'googlegmail://co',
     outlook: isAndroid ? 'com.microsoft.office.outlook' : 'ms-outlook://compose',
-    hub:     isAndroid ? 'com.blackberry.hub' : undefined
+    hub: isAndroid ? 'com.blackberry.hub' : undefined
 };
 
 /**
  * List of possible permissions to request.
+ * @readonly
+ * @type {Record<string, number>}
  */
-exports.permission = {
+plugin.permission = {
     READ_EXTERNAL_STORAGE: 1,
     READ_ACCOUNTS: 2
 };
@@ -42,223 +54,295 @@ exports.permission = {
 /**
  * List of all available options with their default value.
  *
- * @return [ Object ]
+ * @return {*}
  */
-exports.getDefaults = function () {
+plugin.getDefaults = function ()
+{
     return {
-        app:           mailto,
-        from:          '',
-        subject:       '',
-        body:          '',
-        to:            [],
-        cc:            [],
-        bcc:           [],
-        attachments:   [],
-        isHtml:        false,
+        app: mailto,
+        from: '',
+        subject: '',
+        body: '',
+        to: [],
+        cc: [],
+        bcc: [],
+        attachments: [],
+        isHtml: false,
         chooserHeader: 'Open with'
     };
 };
 
 /**
- * Informs if the app has the needed permission.
+ * Informs if the app has the given permission.
  *
- * @param [ Number ]   permission The permission to check.
- * @param [ Function ] callback   The callback function.
- * @param [ Object ]   scope      The scope of the callback.
+ * @param {number} permission The permission to check.
+ * @param {(hasPermission:boolean)=>void} callback The callback function.
+ * @param {*} scope The scope of the callback.
  *
- * @return [ Void ]
+ * @void
  */
-exports.hasPermission = function(permission, callback, scope) {
-    var fn = this.createCallbackFn(callback, scope);
+plugin.hasPermission = function (permission, callback, scope)
+{
+    var fn = createCallbackFn(callback, scope);
 
-    if (!isAndroid) {
+    if (!isAndroid)
+    {
         if (fn) fn(true);
         return;
     }
 
-    exec(fn, null, 'EmailComposer', 'check', [permission]);
- };
+    function onError(error)
+    {
+        console.error("email_composer: cannot check permission", error);
+        // TODO pass error to error callback
+        if(fn)
+            fn(false);
+    }
+
+    exec(fn, onError, 'EmailComposer', 'check', [permission]);
+};
 
 /**
- * Request permission if not already granted.
+ * Request given permission if not already granted.
  *
- * @param [ Number ]   permission The permission to request.
- * @param [ Function ] callback The callback function.
- * @param [ Object ]   scope    The scope of the callback.
+ * @param {number} permission The permission to grant.
+ * @param {(hasPermission:boolean)=>void} callback The callback function.
+ * @param {*} scope The scope of the callback.
  *
- * @return [ Void ]
+ * @void
  */
-exports.requestPermission = function(permission, callback, scope) {
-    var fn = this.createCallbackFn(callback, scope);
+plugin.requestPermission = function (permission, callback, scope)
+{
+    var fn = createCallbackFn(callback, scope);
 
-    if (!isAndroid) {
+    if (!isAndroid)
+    {
         if (fn) fn(true);
         return;
     }
 
-    exec(fn, null, 'EmailComposer', 'request', [permission]);
+    function onError(error)
+    {
+        console.error("email_composer: cannot request permission", error);
+        // TODO pass error to error callback
+        if(fn)
+            fn(false);
+    }
+
+    exec(fn, onError, 'EmailComposer', 'request', [permission]);
 };
 
 /**
- * Tries to find out if the device has an configured email account.
+ * Tries to find out if the device has an email account configured.
  *
- * @param [ Function ] callback The callback function.
- * @param [ Object ]   scope    The scope of the callback.
+ * @param {(hasAccount:boolean)=>void} callback The callback function.
+ * @param {*} scope The scope of the callback.
  *
- * @return [ Void ]
+ * @void
  */
-exports.hasAccount = function (callback, scope) {
-    var fn  = this.createCallbackFn(callback, scope);
+plugin.hasAccount = function (callback, scope)
+{
+    var fn = createCallbackFn(callback, scope);
 
-    exec(fn, null, 'EmailComposer', 'account', []);
+    function onError(error)
+    {
+        console.error("email_composer: cannot check account", error);
+        // TODO pass error to error callback
+        if(fn)
+            fn(false);
+    }
+
+    exec(fn, onError, 'EmailComposer', 'account', []);
 };
 
 /**
- * Tries to find out if the device has an installed email client.
+ * Tries to find out if the device has an email client installed.
  *
- * @param [ String ]   app      An optional app id or uri scheme.
- *                              Defaults to mailto.
- * @param [ Function ] callback The callback function.
- * @param [ Object ]   scope    The scope of the callback.
+ * @param {string} app An optional app id or uri scheme. Defaults to mailto.
+ * @param {(hasClient:boolean)=>void} callback The callback function.
+ * @param {*} scope The scope of the callback.
  *
- * @return [ Void ]
+ * @void
  */
-exports.hasClient = function (app, callback, scope) {
+plugin.hasClient = function (app, callback, scope)
+{
 
-    if (typeof callback != 'function') {
-        scope    = null;
+    if (typeof callback != 'function')
+    {
+        scope = null;
+        // noinspection JSValidateTypes
         callback = app;
-        app      = mailto;
+        app = mailto;
     }
 
-    var fn  = this.createCallbackFn(callback, scope),
-        app = app || mailto;
+    var fn = createCallbackFn(callback, scope);
+    app = app || mailto;
 
-    if (this.aliases.hasOwnProperty(app)) {
+    if (this.aliases.hasOwnProperty(app))
+    {
         app = this.aliases[app];
     }
 
-    exec(fn, null, 'EmailComposer', 'client', [app]);
+    function onError(error)
+    {
+        console.error("email_composer: cannot check client", error);
+        // TODO pass error to error callback
+        if(fn)
+            fn(false);
+    }
+
+
+    exec(fn, onError, 'EmailComposer', 'client', [app]);
 };
 
 /**
  * List of package IDs for all available email clients (Android only).
  *
- * @param [ Function ] callback The callback function.
- * @param [ Object ]   scope    The scope of the callback.
+ * @param {(clients:Array<string>|null)=>void} callback The callback function.
+ * @param {*} scope The scope of the callback.
  *
- * @return [ Void ]
+ * @void
  */
-exports.getClients = function (callback, scope) {
-    var fn = this.createCallbackFn(callback, scope);
+plugin.getClients = function (callback, scope)
+{
+    var fn = createCallbackFn(callback, scope);
 
-    if (!isAndroid) {
+    if (!isAndroid)
+    {
         if (fn) fn(null);
         return;
     }
 
-    exec(fn, null, 'EmailComposer', 'clients', []);
+    function onError(error)
+    {
+        console.error("email_composer: cannot get clients", error);
+        // TODO pass error to error callback
+        if(fn)
+            fn(null);
+    }
+
+    exec(fn, onError, 'EmailComposer', 'clients', []);
 };
 
 /**
  * Displays the email composer pre-filled with data.
  *
- * @param [ Object ]   options  The email properties like the body,...
- * @param [ Function ] callback The callback function.
- * @param [ Object ]   scope    The scope of the callback.
+ * @param {*} options  The email properties like the body,...
+ * @param {(error:any)=>void} callback The callback function.
+ * @param {*} scope The scope of the callback.
  *
- * @return [ Void ]
+ * @void
  */
-exports.open = function (options, callback, scope) {
+plugin.open = function (options, callback, scope)
+{
 
-    if (typeof options == 'function') {
-        scope    = callback;
+    if (typeof options == 'function')
+    {
+        scope = callback;
         callback = options;
-        options  = {};
+        options = {};
     }
 
-    var fn      = this.createCallbackFn(callback, scope),
-        options = this.mergeWithDefaults(options || {});
+    var fn = createCallbackFn(callback, scope);
+    options = mergeWithDefaults(options || {});
 
-    if (!isAndroid && options.app !== mailto && fn) {
-        this.registerCallbackForScheme(fn);
+    if (!isAndroid && options.app !== mailto && fn)
+    {
+        registerCallbackForScheme(fn);
     }
 
-    exec(fn, null, 'EmailComposer', 'open', [options]);
+    function onError(error)
+    {
+        console.error("email_composer: cannot open", error);
+        if(fn)
+            fn(error);
+    }
+
+    exec(fn, onError, 'EmailComposer', 'open', [options]);
 };
+
+/**
+ * Alias for `open()`.
+ */
+plugin.openDraft = plugin.open.bind(plugin);
 
 /**
  * Adds a new mail app alias.
  *
- * @param [ String ] alias   The alias name.
- * @param [ String ] packageName The package name.
+ * @param {string} alias The alias name.
+ * @param {string} packageName The package name.
  *
- * @return [ Void ]
+ * @void
  */
-exports.addAlias = function (alias, packageName) {
+plugin.addAlias = function (alias, packageName)
+{
     this.aliases[alias] = packageName;
 };
 
-/**
- * Alias für `open()`.
- */
-exports.openDraft = function () {
-    this.open.apply(this, arguments);
-};
 
 /**
  * @private
  *
  * Merge settings with default values.
  *
- * @param [ Object ] options The custom options
+ * @param {*} options The custom options
  *
- * @retrun [ Object ] Default values merged with custom values.
+ * @return {*} Default values merged with custom values.
  */
-exports.mergeWithDefaults = function (options) {
-    var defaults = this.getDefaults();
+function mergeWithDefaults(options)
+{
+    var defaults = plugin.getDefaults();
 
-    if (!options.hasOwnProperty('isHtml')) {
+    if (!options.hasOwnProperty('isHtml'))
+    {
         options.isHtml = defaults.isHtml;
     }
 
-    if (options.hasOwnProperty('app')) {
+    if (options.hasOwnProperty('app'))
+    {
+        // will set 'mailto:' or 'mailto' to null
+        // TODO: is this the intended behaviour?
         options.app = this.aliases[options.app];
     }
 
-    if (Array.isArray(options.body)) {
+    if (Array.isArray(options.body))
+    {
         options.body = options.body.join("\n");
     }
 
-    options.app           = String(options.app || defaults.app);
-    options.from          = String(options.from || defaults.from);
-    options.subject       = String(options.subject || defaults.subject);
-    options.body          = String(options.body || defaults.body);
+    options.app = String(options.app || defaults.app);
+    options.from = String(options.from || defaults.from);
+    options.subject = String(options.subject || defaults.subject);
+    options.body = String(options.body || defaults.body);
     options.chooserHeader = String(options.chooserHeader || defaults.chooserHeader);
-    options.to            = options.to || defaults.to;
-    options.cc            = options.cc || defaults.cc;
-    options.bcc           = options.bcc || defaults.bcc;
-    options.attachments   = options.attachments || defaults.attachments;
-    options.isHtml        = !!options.isHtml;
+    options.to = options.to || defaults.to;
+    options.cc = options.cc || defaults.cc;
+    options.bcc = options.bcc || defaults.bcc;
+    options.attachments = options.attachments || defaults.attachments;
+    options.isHtml = !!options.isHtml;
 
-    if (!Array.isArray(options.to)) {
+    if (!Array.isArray(options.to))
+    {
         options.to = [options.to];
     }
 
-    if (!Array.isArray(options.cc)) {
+    if (!Array.isArray(options.cc))
+    {
         options.cc = [options.cc];
     }
 
-    if (!Array.isArray(options.bcc)) {
+    if (!Array.isArray(options.bcc))
+    {
         options.bcc = [options.bcc];
     }
 
-    if (!Array.isArray(options.attachments)) {
+    if (!Array.isArray(options.attachments))
+    {
         options.attachments = [options.attachments];
     }
 
     return options;
-};
+}
 
 /**
  * @private
@@ -266,35 +350,44 @@ exports.mergeWithDefaults = function (options) {
  * Creates a callback, which will be executed
  * within a specific scope.
  *
- * @param [ Function ] callback The callback function.
- * @param [ Object ]   scope    The scope for the function.
+ * @param {(...args: any[])=>void | null} callback The callback function.
+ * @param {* | null} [scope] The scope for the function.
  *
- * @return [ Function ] The new callback function
+ * @return {(...args: any[])=>void | null} The new callback function
  */
-exports.createCallbackFn = function (callback, scope) {
-
+function createCallbackFn(callback, scope)
+{
     if (typeof callback !== 'function')
-        return;
-
-    return function () {
-        callback.apply(scope || this, arguments);
-    };
-};
+        return null;
+    return callback.bind(scope || this);
+}
 
 /**
  * @private
  *
- * Register an Eventlistener on resume-Event to
+ * Register an EventListener on resume-Event to
  * execute callback after open a draft.
- *
- * @return [ Void ]
+ * @param {()=>void} fn
+ * @void
  */
-exports.registerCallbackForScheme = function (fn) {
+registerCallbackForScheme = function (fn)
+{
+    if (typeof callback !== 'function')
+        return;
 
-    var callback = function () {
-        fn();
-        document.removeEventListener('resume',callback);
-    };
+    function callback()
+    {
+        document.removeEventListener('resume', callback);
+        try
+        {
+            fn();
+        } catch (e)
+        {
+            console.error("email_composer: cannot execute callback", e);
+        }
+    }
 
     document.addEventListener('resume', callback, false);
 };
+
+module.exports = plugin;

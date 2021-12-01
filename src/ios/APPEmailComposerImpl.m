@@ -114,6 +114,8 @@
  */
 - (NSURL*) urlFromProperties:(NSDictionary*)props
 {
+    BOOL isHTML = [[props objectForKey:@"isHtml"] boolValue];
+
     NSString* mailto      = [props objectForKey:@"app"];
     NSMutableArray* parts = [[NSMutableArray alloc] init];
     NSString* query       = @"";
@@ -125,7 +127,19 @@
     NSArray* bcc          = [props objectForKey:@"bcc"];
     NSArray* attachments  = [props objectForKey:@"attachments"];
 
+    // https://stackoverflow.com/questions/29806098/nscharacterset-urlhostallowedcharacterset-doesnt-replace-sign
+    // URLFragmentAllowedCharacterSet  "#%<>[\]^`{|}
+    // URLHostAllowedCharacterSet      "#%/<>?@\^`{|}
+    // URLPasswordAllowedCharacterSet  "#%/:<>?@[\]^`{|}
+    // URLPathAllowedCharacterSet      "#%;<>?[\]^`{|}
+    // URLQueryAllowedCharacterSet     "#%<>[\]^`{|}
+    // URLUserAllowedCharacterSet      "#%/:<>?@[\]^`
+
+    // won't replace '&'' in urls ...
     NSCharacterSet* cs    = [NSCharacterSet URLHostAllowedCharacterSet];
+
+    NSCharacterSet *queryComponentValueCharacterSet = [[NSCharacterSet characterSetWithCharactersInString:@"\"#%<>[\\]^`{|}&?="] invertedSet];
+
 
     if (![mailto containsString:@"://"]) {
         mailto = [mailto stringByAppendingString:@"://"];
@@ -148,12 +162,21 @@
 
     if (subject.length > 0) {
         [parts addObject: [NSString stringWithFormat: @"subject=%@",
-                           [subject stringByAddingPercentEncodingWithAllowedCharacters:cs]]];
+                           [subject stringByAddingPercentEncodingWithAllowedCharacters:queryComponentValueCharacterSet]]];
     }
+
+//     if(isHTML) {
+//            [parts addObject: [NSString stringWithFormat: @"Content-Type=%@",
+//                               [@"text/html; charset=utf-8" stringByAddingPercentEncodingWithAllowedCharacters:queryComponentValueCharacterSet]]];
+//     }
+//     else {
+//        [parts addObject: [NSString stringWithFormat: @"Content-Type=%@",
+//                           [@"text/plain; charset=utf-8" stringByAddingPercentEncodingWithAllowedCharacters:queryComponentValueCharacterSet]]];
+//     }
 
     if (body.length > 0) {
         [parts addObject: [NSString stringWithFormat: @"body=%@",
-                           [body stringByAddingPercentEncodingWithAllowedCharacters:cs]]];
+                           [body stringByAddingPercentEncodingWithAllowedCharacters:queryComponentValueCharacterSet]]];
     }
 
     if (attachments.count > 0) {
