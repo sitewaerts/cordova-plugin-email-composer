@@ -22,6 +22,7 @@
 
 var exec = cordova.require('cordova/exec'),
     ua = navigator.userAgent.toLowerCase(),
+    isWindows = window.Windows,
     isAndroid = !window.Windows && ua.indexOf('android') > -1,
     mailto = 'mailto:';
 
@@ -300,9 +301,7 @@ function mergeWithDefaults(options)
 
     if (options.hasOwnProperty('app'))
     {
-        // will set 'mailto:' or 'mailto' to null
-        // TODO: is this the intended behaviour?
-        options.app = plugin.aliases[options.app];
+        options.app = plugin.aliases[options.app] || options.app;
     }
 
     if (Array.isArray(options.body))
