@@ -178,9 +178,9 @@ plugin.hasClient = function (app, callback, scope)
     var fn = createCallbackFn(callback, scope);
     app = app || mailto;
 
-    if (this.aliases.hasOwnProperty(app))
+    if (plugin.aliases.hasOwnProperty(app))
     {
-        app = this.aliases[app];
+        app = plugin.aliases[app];
     }
 
     function onError(error)
@@ -276,7 +276,7 @@ plugin.openDraft = plugin.open.bind(plugin);
  */
 plugin.addAlias = function (alias, packageName)
 {
-    this.aliases[alias] = packageName;
+    plugin.aliases[alias] = packageName;
 };
 
 
@@ -302,7 +302,7 @@ function mergeWithDefaults(options)
     {
         // will set 'mailto:' or 'mailto' to null
         // TODO: is this the intended behaviour?
-        options.app = this.aliases[options.app];
+        options.app = plugin.aliases[options.app];
     }
 
     if (Array.isArray(options.body))
