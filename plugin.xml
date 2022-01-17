@@ -22,7 +22,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
         id="cordova-plugin-email-composer"
-        version="0.9.2-sw">
+        version="0.10.0-sw">
 
     <name>EmailComposer</name>
 
@@ -90,14 +90,22 @@
 
     <!-- android -->
     <platform name="android">
-        <preference name="ANDROID_SUPPORT_V4_VERSION" default="28.+"/>
-        <framework src="com.android.support:support-v4:$ANDROID_SUPPORT_V4_VERSION"/>
+        <config-file target="app/src/main/AndroidManifest.xml" parent="/manifest/queries">
+            <intent>
+                <action android:name="android.intent.action.SENDTO" />
+                <data android:scheme="mailto" />
+            </intent>
+        </config-file>
 
         <config-file target="config.xml" parent="/*">
             <feature name="EmailComposer">
                 <param name="android-package"
                        value="de.appplant.cordova.emailcomposer.EmailComposer"/>
             </feature>
+        </config-file>
+
+        <config-file target="config.xml" parent="/*">
+            <preference name="AndroidXEnabled" value="true" />
         </config-file>
 
         <config-file target="AndroidManifest.xml" parent="application">
@@ -142,7 +150,6 @@
         <js-module src="src/EmailComposerUtil.js" name="EmailComposerUtil">
             <runs />
         </js-module>
-
     </platform>
 
     <!-- browser -->
@@ -161,6 +168,5 @@
         <js-module src="src/EmailComposerUtil.js" name="EmailComposerUtil">
             <runs />
         </js-module>
-
     </platform>
 </plugin>

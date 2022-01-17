@@ -186,6 +186,19 @@ cordova.plugins.email.open({app: 'emlFile', subject: 'Sent from my Cordova Windo
 cordova.plugins.email.open({app: 'windowsEmail', subject: 'Sent from my Cordova Windows app'});
 ```
 
+#### Issue with Ionic/Capacitor and AndroidX
+
+'package android.support.v4.content does not exist'
+
+```bash
+npm install jetifier
+npx jetify
+npx cap sync android
+```
+
+https://capacitorjs.com/docs/android/troubleshooting#error-package-androidsupport-does-not-exist
+
+
 #### HTML and CSS
 
 The built-in email app for iOS does support HTML and CSS. 
