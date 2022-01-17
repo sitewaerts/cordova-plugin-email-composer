@@ -188,8 +188,9 @@ cordova.plugins.email.open({app: 'windowsEmail', subject: 'Sent from my Cordova 
 
 #### HTML and CSS
 
-The built-in email app for iOS does support HTML and CSS. Some Android clients support rich formatted text. On Windows
-Outlook supports HTML and CSS.
+The built-in email app for iOS does support HTML and CSS. 
+Some Android email apps support rich formatted text. 
+On Windows the Outlook App supports HTML and CSS.
 
 Use `isHtml` with caution! It's disabled by default.
 

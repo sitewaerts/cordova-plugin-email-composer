@@ -22,7 +22,7 @@
 
 var exec = cordova.require('cordova/exec'),
     ua = navigator.userAgent.toLowerCase(),
-    isWindows = window.Windows,
+    isWindows = !!window.Windows,
     isAndroid = !window.Windows && ua.indexOf('android') > -1,
     mailto = 'mailto:';
 
