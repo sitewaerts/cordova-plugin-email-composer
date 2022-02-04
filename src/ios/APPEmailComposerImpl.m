@@ -136,9 +136,9 @@
     // URLUserAllowedCharacterSet      "#%/:<>?@[\]^`
 
     // won't replace '&'' in urls ...
-    NSCharacterSet* cs    = [NSCharacterSet URLHostAllowedCharacterSet];
+    // NSCharacterSet* cs    = [NSCharacterSet URLHostAllowedCharacterSet];
 
-    NSCharacterSet *queryComponentValueCharacterSet = [[NSCharacterSet characterSetWithCharactersInString:@"\"#%<>[\\]^`{|}&?="] invertedSet];
+    NSCharacterSet *cs = [[NSCharacterSet characterSetWithCharactersInString:@"\"#%<>[\\]^`{|}&?=\n "] invertedSet];
 
 
     if (![mailto containsString:@"://"]) {
@@ -162,21 +162,21 @@
 
     if (subject.length > 0) {
         [parts addObject: [NSString stringWithFormat: @"subject=%@",
-                           [subject stringByAddingPercentEncodingWithAllowedCharacters:queryComponentValueCharacterSet]]];
+                           [subject stringByAddingPercentEncodingWithAllowedCharacters:cs]]];
     }
 
 //     if(isHTML) {
 //            [parts addObject: [NSString stringWithFormat: @"Content-Type=%@",
-//                               [@"text/html; charset=utf-8" stringByAddingPercentEncodingWithAllowedCharacters:queryComponentValueCharacterSet]]];
+//                               [@"text/html; charset=utf-8" stringByAddingPercentEncodingWithAllowedCharacters:cs]]];
 //     }
 //     else {
 //        [parts addObject: [NSString stringWithFormat: @"Content-Type=%@",
-//                           [@"text/plain; charset=utf-8" stringByAddingPercentEncodingWithAllowedCharacters:queryComponentValueCharacterSet]]];
+//                           [@"text/plain; charset=utf-8" stringByAddingPercentEncodingWithAllowedCharacters:cs]]];
 //     }
 
     if (body.length > 0) {
         [parts addObject: [NSString stringWithFormat: @"body=%@",
-                           [body stringByAddingPercentEncodingWithAllowedCharacters:queryComponentValueCharacterSet]]];
+                           [body stringByAddingPercentEncodingWithAllowedCharacters:cs]]];
     }
 
     if (attachments.count > 0) {
@@ -190,6 +190,8 @@
     }
 
     mailto = [mailto stringByAppendingString:query];
+
+    //NSLog(@"urlFromProperties: %@", mailto);
 
     return [NSURL URLWithString:mailto];
 }
