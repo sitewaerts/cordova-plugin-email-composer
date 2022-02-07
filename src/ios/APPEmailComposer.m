@@ -159,7 +159,7 @@
 }
 
 /**
- * If the specified app if the buil-in iMail framework can be used.
+ * If the specified app if the build-in iMail framework can be used.
  */
 - (BOOL) canUseAppleMail:(NSString*) scheme
 {
