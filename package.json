@@ -52,8 +52,8 @@
   "homepage": "https://github.com/katzer/cordova-plugin-email-composer#readme",
   "devDependencies": {
     "@types/cordova": "^0.0.34",
-    "@types/web": "^0.0.47",
+    "@types/web": "^0.0.75",
     "@types/winjs": "^4.4.1",
-    "@types/winrt-uwp": "^0.0.21"
+    "@types/winrt-uwp": "^0.0.23"
   }
 }
