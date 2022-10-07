@@ -1,19 +1,14 @@
+
 <p align="left"><b><a href="https://github.com/katzer/cordova-plugin-email-composer/tree/example">SAMPLE APP</a> :point_right:</b></p>
 
 # Cordova Email Plugin <br> [![npm version](https://badge.fury.io/js/cordova-plugin-email-composer.svg)](http://badge.fury.io/js/cordova-plugin-email-composer) [![Code Climate](https://codeclimate.com/github/katzer/cordova-plugin-email-composer/badges/gpa.svg)](https://codeclimate.com/github/katzer/cordova-plugin-email-composer) [![PayPayl donate button](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=L3HKQCD9UA35A "Donate once-off to this project using Paypal")
 
 <img width="260px" align="right" hspace="10" vspace="5" src="https://github.com/katzer/cordova-plugin-email-composer/blob/example/images/ios_iphone5s_spacegrey_portrait.png">
 
-The plugin provides access to the standard interface that manages the editing and sending an email message. You can use
-this view controller to display a standard email view inside your application and populate the fields of that view with
-initial values, such as the subject, email recipients, body text, and attachments. The user can edit the initial
-contents you specify and choose to send the email or cancel the operation.
+The plugin provides access to the standard interface that manages the editing and sending an email message. You can use this view controller to display a standard email view inside your application and populate the fields of that view with initial values, such as the subject, email recipients, body text, and attachments. The user can edit the initial contents you specify and choose to send the email or cancel the operation.
 
-Using this interface does not guarantee immediate delivery of the corresponding email message. The user may cancel the
-creation of the message, and if the user does choose to send the message, the message is only queued in the Mail
-application outbox. This allows you to generate emails even in situations where the user does not have network access,
-such as in airplane mode. This interface does not provide a way for you to verify whether emails were actually
-sent.<br><br>
+Using this interface does not guarantee immediate delivery of the corresponding email message. The user may cancel the creation of the message, and if the user does choose to send the message, the message is only queued in the Mail application outbox. This allows you to generate emails even in situations where the user does not have network access, such as in airplane mode. This interface does not provide a way for you to verify whether emails were actually sent.<br><br>
+
 
 ## Supported Platforms
 
@@ -22,6 +17,7 @@ sent.<br><br>
 - __iOS__
 - __OSX__
 - __Windows__
+
 
 ## Installation
 
@@ -35,7 +31,7 @@ Or install a specific version:
 
     $ cordova plugin add cordova-plugin-email-composer@VERSION
 
-Or install the latest head version:
+Or install the latest master version:
 
     $ cordova plugin add https://github.com/katzer/cordova-plugin-email-composer.git
 
@@ -43,13 +39,13 @@ Or install from local source:
 
     $ cordova plugin add <path> --nofetch --nosave
 
+
 ## Usage
 
 The plugin creates the object `cordova.plugins.email` and is accessible after the *deviceready* event has been fired.
 
 ```javascript
-document.addEventListener('deviceready', function ()
-{
+document.addEventListener('deviceready', function () {
     // cordova.plugins.email is now available
 }, false);
 ```
@@ -127,11 +123,11 @@ The following example shows how to create and show an email draft pre-filled wit
 
 ```javascript
 cordova.plugins.email.open({
-    to: 'max@mustermann.de',
-    cc: 'erika@mustermann.de',
-    bcc: ['john@doe.com', 'jane@doe.com'],
+    to:      'max@mustermann.de',
+    cc:      'erika@mustermann.de',
+    bcc:     ['john@doe.com', 'jane@doe.com'],
     subject: 'Greetings',
-    body: 'How are you? Nice greetings from Leipzig'
+    body:    'How are you? Nice greetings from Leipzig'
 });
 ```
 
@@ -146,7 +142,7 @@ It's possible to specify the email client. If the device isn´t able to handle t
 the system default:
 
 ```javascript
-cordova.plugins.email.open({app: 'mailto', subject: 'Sent with mailto from my Cordov app'});
+cordova.plugins.email.open({app: 'mailto', subject: 'Sent with mailto from my Cordova app'});
 ```
 
 On __Android__ the app can be specified by either an alias or its package name. The alias _gmail_ is available by default.
@@ -156,7 +152,7 @@ On __Android__ the app can be specified by either an alias or its package name. 
 cordova.plugins.email.addAlias('gmail', 'com.google.android.gm');
 
 // Specify app by name or alias
-cordova.plugins.email.open({app: 'gmail', subject: 'Sent from my Cordov Android app'});
+cordova.plugins.email.open({app: 'gmail', subject: 'Sent from my Cordova Android app'});
 ```
 
 On __Windows__ only predefined apps can be specified.
@@ -186,18 +182,23 @@ cordova.plugins.email.open({app: 'emlFile', subject: 'Sent from my Cordova Windo
 cordova.plugins.email.open({app: 'windowsEmail', subject: 'Sent from my Cordova Windows app'});
 ```
 
-#### Issue with Ionic/Capacitor and AndroidX
 
-'package android.support.v4.content does not exist'
+
+#### Issues with AndroidX
+
+If you have issues with AndroidX, simply install the extra plugin
+
+```
+cordova plugin add cordova-plugin-androidx-adapter
+```
+
+For Ionic/Capacitor you can also try
 
 ```bash
 npm install jetifier
 npx jetify
 npx cap sync android
 ```
-
-https://capacitorjs.com/docs/android/troubleshooting#error-package-androidsupport-does-not-exist
-
 
 #### HTML and CSS
 
@@ -209,11 +210,12 @@ Use `isHtml` with caution! It's disabled by default.
 
 #### Attach Base64 encoded content
 
+
 The code below shows how to attach a base64 encoded image which will be added as an image with the name *icon.png*.
 
 ```javascript
 cordova.plugins.email.open({
-    subject: 'Cordova Icon',
+    subject:     'Cordova Icon',
     attachments: ['base64:icon.png//iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6...']
 });
 ```
@@ -255,7 +257,6 @@ cordova.plugins.email.open({
 ```
 
 #### Attach files from the internal app file system
-
 The path must be defined relative from the directory holding application files.
 
 ```javascript
@@ -314,12 +315,13 @@ cordova.plugins.email.getClients(
 ## Permissions / Capabilities
 
 ### Android Permissions
-Some functions require permissions on Android. The plugin itself does not add them to the manifest nor does it ask
+Some functions require permissions on __Android__. The plugin itself does not add them to the manifest nor does it ask
 for by itself at runtime.
 
 | Permission | Description |
 | ---------- | ----------- |
 | `cordova.plugins.email.permission.READ_EXTERNAL_STORAGE` | Is needed to attach external files `file:///` located outside of the app's own file system. |
+| `cordova.plugins.email.permission.GET_ACCOUNTS` | Without the permission the `hasAccount()` function wont be able to look for email accounts. |
 | `cordova.plugins.email.permission.READ_ACCOUNTS` | Without the permission the `hasAccount()` function wont be able to look for email accounts. |
 
 To check if a permission has been granted:
@@ -395,6 +397,7 @@ the required capabilities, your app may crash when opening the email composer.
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
+
 ## License
 
 This software is released under the [Apache 2.0 License][apache2_license].
@@ -405,13 +408,10 @@ Made with :yum: from Leipzig
 
 
 [cordova]: https://cordova.apache.org
-
 [CLI]: http://cordova.apache.org/docs/en/edge/guide_cli_index.md.html#The%20Command-line%20Interface
-
 [npm]: https://www.npmjs.com/package/cordova-plugin-email-composer
-
+[email_app]: #specify-email-app
 [apache2_license]: http://opensource.org/licenses/Apache-2.0
-
 [appplant]: http://appplant.de
 
 [Windows.ApplicationModel.Email]: https://docs.microsoft.com/en-us/uwp/api/Windows.ApplicationModel.Email
