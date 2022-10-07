@@ -144,7 +144,7 @@ public class EmailComposer extends CordovaPlugin {
     }
 
     /**
-     * Tries to figure out if an email account is setup.
+     * Tries to figure out if an email account is set up.
      */
     private void account() {
         cordova.getThreadPool().execute(new Runnable() {
@@ -170,8 +170,10 @@ public class EmailComposer extends CordovaPlugin {
                 try {
                     Impl impl    = new Impl(getContext());
                     Intent draft = impl.getDraft(props);
-
-                    cordova.startActivityForResult(me, draft, 0);
+                    if(draft == null)
+                        onActivityResult(0, 0, null);
+                    else
+                        cordova.startActivityForResult(me, draft, 0);
                 } catch (ActivityNotFoundException e) {
                     onActivityResult(0, 0, null);
                 }
@@ -218,7 +220,7 @@ public class EmailComposer extends CordovaPlugin {
      * Returns the corresponding permissions for the internal code.
      *
      * @param code The internal code number.
-     * @return Array of the the Android permission strings or [].
+     * @return Array of the Android permission strings or [].
      */
     private String[] getPermissions(int code){
         switch (code)

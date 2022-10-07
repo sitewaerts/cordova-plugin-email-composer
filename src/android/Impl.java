@@ -87,6 +87,12 @@ class Impl {
             targets.add(target.setPackage(clientId));
         }
 
+        if(targets.isEmpty())
+        {
+            Log.w(LOG_TAG, "no email client available.");
+            return null;
+        }
+
         return Intent.createChooser(draft, header)
                 .putExtra(EXTRA_INITIAL_INTENTS, targets.toArray(new Parcelable[0]));
     }

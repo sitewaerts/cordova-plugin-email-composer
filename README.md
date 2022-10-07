@@ -321,7 +321,6 @@ for by itself at runtime.
 | Permission | Description |
 | ---------- | ----------- |
 | `cordova.plugins.email.permission.READ_EXTERNAL_STORAGE` | Is needed to attach external files `file:///` located outside of the app's own file system. |
-| `cordova.plugins.email.permission.GET_ACCOUNTS` | Without the permission the `hasAccount()` function wont be able to look for email accounts. |
 | `cordova.plugins.email.permission.READ_ACCOUNTS` | Without the permission the `hasAccount()` function wont be able to look for email accounts. |
 
 To check if a permission has been granted:
