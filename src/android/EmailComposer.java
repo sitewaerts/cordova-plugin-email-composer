@@ -226,8 +226,12 @@ public class EmailComposer extends CordovaPlugin {
         switch (code)
         {
             case 1:
-                return new String[]{READ_EXTERNAL_STORAGE};
+                return new String[]{READ_MEDIA_IMAGES};
             case 2:
+                return new String[]{READ_MEDIA_VIDEO};
+            case 3:
+                return new String[]{READ_MEDIA_AUDIO};
+            case 4:
                 return new String[]{GET_ACCOUNTS, READ_CONTACTS}; // see https://stackoverflow.com/a/54941079/4094951
             default:
                 return new String[0];

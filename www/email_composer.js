@@ -48,8 +48,10 @@ plugin.aliases = {
  * @type {Record<string, number>}
  */
 plugin.permission = {
-    READ_EXTERNAL_STORAGE: 1,
-    READ_ACCOUNTS: 2
+    READ_MEDIA_IMAGES: 1,
+    READ_MEDIA_VIDEO: 2,
+    READ_MEDIA_AUDIO: 3,
+    READ_ACCOUNTS: 4
 };
 
 /**

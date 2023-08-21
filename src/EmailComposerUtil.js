@@ -48,9 +48,9 @@ var util = {
     /**
      * convert given markup to plain text.
      *
-     * @param {String} markupText
+     * @param {string} markupText
      * @param {boolean} uriDelimiting
-     * @return {String} plain text
+     * @return {string} plain text
      */
     toPlainText: function (markupText, uriDelimiting)
     {
@@ -201,11 +201,24 @@ var util = {
     getMailToUri: function (props, appendContentType)
     {
 
+        // Specify multiple recipients in the To field, separating addresses with a comma (,) or a semicolon (;). For example: mailto:postmaster@example.com,mail@example.com.
+        // Note: It is better to separate addresses with a semicolon because users of Microsoft Office Outlook might experience issues with sending email to recipient addresses separated with commas. Microsoft Office Outlook 2003 and later versions do not recognize a comma as an email address separator, unless they are specifically configured to do so. For details, see the article at http://support.microsoft.com/kb/820868.
+        // https://www.officetooltips.com/outlook_365/tips/how_to_use_commas_as_separators_for_multiple_email_recipients.html
+        // https://www.lifewire.com/separate-multiple-email-recipients-1173274
+        // https://stackoverflow.com/questions/45924713/email-separating-character-in-html-mail-link-is-different-across-mail-clients
+        var defaultAddressSeparator = ';';
+
+        /**
+         *
+         * @param {string} name
+         * @param {string | Array<string>} value
+         * @return {string}
+         */
         function appendParam(name, value)
         {
             if (value == null || value === '')
                 return '';
-            value = ([].concat(value)).join(",");
+            value = ([].concat(value)).join(defaultAddressSeparator);
             if (value === '')
                 return '';
             return '&' + name + "=" + encodeURIComponent(value);
@@ -220,7 +233,8 @@ var util = {
 
         var contentType = this.getContentType(props);
         // The URI to launch
-        var uriToLaunch = "mailto:" + ([].concat(props.to)).join(",");
+
+        var uriToLaunch = "mailto:" + ([].concat(props.to)).join(defaultAddressSeparator);
 
         var options = '';
 
@@ -271,7 +285,7 @@ var util = {
 
     /**
      * could be used for browser
-     * creates an blob url pointing to the email draft in eml format
+     * creates a blob url pointing to the email draft in eml format
      * @param {*} props
      * @return {LaunchInfoUri}
      */

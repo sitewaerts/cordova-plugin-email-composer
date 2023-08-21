@@ -320,7 +320,9 @@ for by itself at runtime.
 
 | Permission | Description |
 | ---------- | ----------- |
-| `cordova.plugins.email.permission.READ_EXTERNAL_STORAGE` | Is needed to attach external files `file:///` located outside of the app's own file system. |
+| `cordova.plugins.email.permission.READ_MEDIA_IMAGES` | Is needed to attach external files `file:///` located outside of the app's own file system. |
+| `cordova.plugins.email.permission.READ_MEDIA_VIDEO` | Is needed to attach external files `file:///` located outside of the app's own file system. |
+| `cordova.plugins.email.permission.READ_MEDIA_AUDIO` | Is needed to attach external files `file:///` located outside of the app's own file system. |
 | `cordova.plugins.email.permission.READ_ACCOUNTS` | Without the permission the `hasAccount()` function wont be able to look for email accounts. |
 
 To check if a permission has been granted:
@@ -352,13 +354,16 @@ cordova.plugins.email.requestPermission(permission,
 __Note:__ The author of the app has to make sure that the permission is listed in the manifest. For Android you may
 add the following lines to config.xml to achieve this:
 
+Android starting with version 13.0
 ```xml
 <platform name="android">
     <config-file target="app/src/main/AndroidManifest.xml" parent="/manifest"
                  xmlns:android="http://schemas.android.com/apk/res/android">
         <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
         <uses-permission android:name="android.permission.READ_CONTACTS"/>
-        <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+        <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+        <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+        <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
     </config-file>
 </platform>
 ```
