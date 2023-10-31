@@ -1,0 +1,26 @@
+{
+    "name": "cordova-plugin-email-compose-electron",
+    "version": "1.0.0",
+    "description": "Electron Native Support for Cordova Email Composer Plugin",
+    "main": "index.js",
+    "keywords": [
+        "cordova",
+        "electron",
+        "email-composer",
+        "native"
+    ],
+    "author": "sitewaerts GmbH",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "fs-extra": "^11.1.0",
+        "regexp.escape": "^1.1.0"
+    },
+    "cordova": {
+        "serviceName": "EmailComposer"
+    },
+    "devDependencies": {
+        "@types/electron": "^1.6.10",
+        "@types/fs-extra": "^11.0.3",
+        "@types/node": "^20.8.8"
+    }
+}

@@ -1,7 +1,8 @@
 {
   "name": "cordova-plugin-email-composer",
-  "version": "0.10.2-sw",
+  "version": "0.10.3-sw",
   "description": "Provides access to the standard interface that manages the editing and sending an email message",
+  "types": "./types/index.d.ts",
   "cordova": {
     "id": "cordova-plugin-email-composer",
     "platforms": [
@@ -9,12 +10,13 @@
       "osx",
       "android",
       "windows",
-      "browser"
+      "browser",
+      "electron"
     ]
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/katzer/cordova-plugin-email-composer.git"
+    "url": "git+https://github.com/regnete/cordova-plugin-email-composer.git"
   },
   "keywords": [
     "appplant",
@@ -24,7 +26,8 @@
     "cordova-osx",
     "cordova-android",
     "cordova-windows",
-    "cordova-browser"
+    "cordova-browser",
+    "cordova-electron"
   ],
   "engines": [
     {
@@ -42,14 +45,18 @@
     {
       "name": "cordova-windows",
       "version": ">=4.3.0"
+    },
+    {
+      "name": "cordova-electron",
+      "version": ">=4.0.0"
     }
   ],
   "author": "Sebastián Katzer",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/katzer/cordova-plugin-email-composer/issues"
+    "url": "https://github.com/regnete/cordova-plugin-email-composer/issues"
   },
-  "homepage": "https://github.com/katzer/cordova-plugin-email-composer#readme",
+  "homepage": "https://github.com/regnete/cordova-plugin-email-composer#readme",
   "devDependencies": {
     "@types/cordova": "^0.0.34",
     "@types/web": "^0.0.75",

@@ -24,7 +24,7 @@ var util = cordova.require('cordova-plugin-email-composer.EmailComposerUtil');
 var proxy = {};
 
 /**
- * Tries to find out if the device has an configured email account.
+ * Tries to find out if the device has a configured email account.
  *
  * @param {function} success Success callback
  * @param {function} error Error callback

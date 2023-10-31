@@ -39,7 +39,15 @@ under the License.
  * @property {string} contentType
  */
 
-var jQuery = window['$'];
+var jQuery = null;
+
+try
+{
+    jQuery = window['$'];
+}
+catch (e){
+    // ignore
+}
 
 
 // noinspection JSUnusedGlobalSymbols
@@ -50,7 +58,7 @@ var util = {
      *
      * @param {string} markupText
      * @param {boolean} uriDelimiting
-     * @return {string} plain text
+     * @return {string | null} plain text
      */
     toPlainText: function (markupText, uriDelimiting)
     {
@@ -90,12 +98,12 @@ var util = {
             return markupText.replace(/<a [^>]*href="(.*)"[^>]*> *(.*) *<\/a>/g,
                 function (all, href, content)
                 {
-                    // space after url makes url clickable even if its
+                    // space after url makes url clickable even if it's
                     // placed at the end of a line.
 
                     if (uriDelimiting)
                     {
-                        // mark url for post processing with surroundLinks()
+                        // mark url for post-processing with surroundLinks()
                         return content + " _link_start_" + href + "_link_end_ ";
                     }
                     else

@@ -17,28 +17,16 @@ Using this interface does not guarantee immediate delivery of the corresponding 
 - __iOS__
 - __OSX__
 - __Windows__
+- __Electron__
 
 
 ## Installation
 
-The plugin can be installed via [Cordova-CLI][CLI] and is publicly available on [NPM][npm].
+The plugin can be installed via [Cordova-CLI][CLI].
 
-Execute from the projects root folder:
+Install the latest master version:
 
-    $ cordova plugin add cordova-plugin-email-composer
-
-Or install a specific version:
-
-    $ cordova plugin add cordova-plugin-email-composer@VERSION
-
-Or install the latest master version:
-
-    $ cordova plugin add https://github.com/katzer/cordova-plugin-email-composer.git
-
-Or install from local source:
-
-    $ cordova plugin add <path> --nofetch --nosave
-
+    $ cordova plugin add https://github.com/regnete/cordova-plugin-email-composer.git
 
 ## Usage
 

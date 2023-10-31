@@ -2,3 +2,5 @@
 /out
 *.iml
 /node_modules
+/src/electron/package-lock.json
+/src/electron/node_modules/
