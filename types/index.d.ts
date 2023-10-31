@@ -1,5 +1,5 @@
 // Type definitions for Apache Cordova EmailComposer plugin
-// Project: https://github.com/regnete/cordova-plugin-email-composer
+// Project: https://github.com/sitewaerts/cordova-plugin-email-composer
 // Definitions by: Microsoft Open Technologies Inc. <http://msopentech.com>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 //

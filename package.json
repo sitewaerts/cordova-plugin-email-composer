@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/regnete/cordova-plugin-email-composer.git"
+    "url": "git+https://github.com/sitewaerts/cordova-plugin-email-composer.git"
   },
   "keywords": [
     "appplant",
@@ -54,9 +54,9 @@
   "author": "Sebastián Katzer",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/regnete/cordova-plugin-email-composer/issues"
+    "url": "https://github.com/sitewaerts/cordova-plugin-email-composer/issues"
   },
-  "homepage": "https://github.com/regnete/cordova-plugin-email-composer#readme",
+  "homepage": "https://github.com/sitewaerts/cordova-plugin-email-composer#readme",
   "devDependencies": {
     "@types/cordova": "^0.0.34",
     "@types/web": "^0.0.75",

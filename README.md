@@ -26,7 +26,7 @@ The plugin can be installed via [Cordova-CLI][CLI].
 
 Install the latest master version:
 
-    $ cordova plugin add https://github.com/regnete/cordova-plugin-email-composer.git
+    $ cordova plugin add https://github.com/sitewaerts/cordova-plugin-email-composer.git
 
 ## Usage
 
