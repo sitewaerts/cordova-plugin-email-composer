@@ -24,6 +24,8 @@ const fs = require('fs-extra');
 
 const util = require('../EmailComposerUtil');
 
+const { shell } = require('electron')
+
 /**
  *
  * @param callbackContext
@@ -87,8 +89,12 @@ const emailComposerPlugin = {
   open: ([props], callbackContext)=>{
         // TODO: emlFile support incl. attachments
         const mailTo = util.getMailToUri(props, true);
-        window.location.href = mailTo.uri;
-        callbackContext.success();
+        shell.openExternal(mailTo.uri).then(()=>{
+            callbackContext.success();
+        }, (error)=>{
+            callbackContext.error(error);
+        });
+
   }
 }
 
