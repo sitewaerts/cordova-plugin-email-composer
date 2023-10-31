@@ -24,7 +24,8 @@ const fs = require('fs-extra');
 
 const util = require('../EmailComposerUtil');
 
-const { shell } = require('electron')
+const {shell} = require('electron')
+const {Buffer} = require("buffer");
 
 /**
  *
@@ -63,6 +64,102 @@ function isNotFoundError(error)
     return !!(error && error.code === 'ENOENT');
 }
 
+/**
+ * @param {*} props
+ * @param {CallbackContext} callbackContext
+ * @void
+ */
+function openMailtoUri(props, callbackContext)
+{
+
+    const mailTo = util.getMailToUri(props, true);
+    shell.openExternal(mailTo.uri).then(() =>
+    {
+        callbackContext.success();
+    }, (error) =>
+    {
+        callbackContext.error(error);
+    });
+}
+
+/**
+ * @typedef {Object} EMLFile
+ * @property {string} file
+ * @property {()=>void} close
+ */
+
+/**
+ * create temp eml file and corresponding Windows.System.LauncherOptions
+ * @param {EmailComposerOptions} props
+ * @param {CallbackContext} callbackContext
+ * @returns Promise<EMLFile>
+ */
+async function getEMLFile(props, callbackContext)
+{
+    const eml = util.getEMLContent(props);
+
+    const tempDir = path.join(getFilePluginUtil(callbackContext).paths().tempDirectory, "cordova-plugin-email-composer")
+    const tempFile = path.join(tempDir, "draft.eml")
+
+    await fs.mkdir(tempDir, {recursive: true})
+
+        const buf = Buffer.from(eml.text);
+
+        await fs.open(tempFile, 'w')
+            .then(fd =>
+            {
+                return fs.write(fd, buf, 0, buf.length, 0)
+                    .finally(() => fs.close(fd));
+            })
+
+    return {
+        file: tempFile,
+        options: {},
+        close: function ()
+        {
+            eml.close();
+            // wait until app has started and read the file
+            setTimeout(function ()
+            {
+                return fs.remove(tempFile)
+                    .catch((error) =>
+                    {
+                        console.error("cannot remove temp file " + tempFile, error);
+                    });
+            }, 60000);
+        }
+    }
+
+
+}
+
+
+/**
+ * @param {EmailComposerOptions} props
+ * @param {CallbackContext} callbackContext
+ * @void
+ */
+function openEMLFile(props, callbackContext)
+{
+    getEMLFile(props, callbackContext).then((emlFile)=>{
+        shell.openPath(emlFile.file).then((error) =>
+        {
+            emlFile.close();
+            if(error && error.length > 0)
+                callbackContext.error(error);
+            else
+                callbackContext.success();
+        }, (error) =>
+        {
+            emlFile.close();
+            callbackContext.error(error);
+        });
+    }, (error)=>{
+        callbackContext.error(error);
+    });
+
+}
+
 
 const emailComposerPlugin = {
 
@@ -71,31 +168,30 @@ const emailComposerPlugin = {
      * @param {CallbackContext} callbackContext
      * @void
      */
-  account: ([app], callbackContext)=>{
+    account: ([app], callbackContext) =>
+    {
         callbackContext.success(app === 'mailto:' || app === 'mailto' ? true : null)
-  },
+    },
     /**
      * @param {CallbackContext} callbackContext
      * @void
      */
-  client: ([], callbackContext)=>{
+    client: ([], callbackContext) =>
+    {
         callbackContext.success()
-  },
+    },
     /**
-     * @param {*} [props]
+     * @param {*} props
      * @param {CallbackContext} callbackContext
      * @void
      */
-  open: ([props], callbackContext)=>{
-        // TODO: emlFile support incl. attachments
-        const mailTo = util.getMailToUri(props, true);
-        shell.openExternal(mailTo.uri).then(()=>{
-            callbackContext.success();
-        }, (error)=>{
-            callbackContext.error(error);
-        });
-
-  }
+    open: ([props], callbackContext) =>
+    {
+        if (props.app === "emlFile")
+            openEMLFile(props, callbackContext);
+        else
+            openMailtoUri(props, callbackContext)
+    }
 }
 
 /**

@@ -88,7 +88,7 @@ proxy.open = function (success, error, args) {
                     // could not compose
                     if(props.isHtml)
                     {
-                        // may be compose failed because this app is compiled for win8.1 but running on win10
+                        // possibly compose failed because this app is compiled for win8.1 but running on win10
                         //  --> in this special case WinMail is available, but the EmailMessage.setBodyStream api is not fully supported
                         // retry via eml file
                         if(console)
@@ -387,7 +387,7 @@ function getMailToUri(props, callback){
 /**
  * opening email draft from eml file ist not supported by some email apps
  * e.g. outlook supports it, but the windows mail app doesn't
- * to use the the eml feature the property emlFile = true must be specified
+ * to use the eml feature the property emlFile = true must be specified
  *
  * advantage of the eml file: body may contain html content,
  * which is not supported by mailto links
