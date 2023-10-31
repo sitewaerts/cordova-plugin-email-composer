@@ -128,8 +128,6 @@ interface EmailComposer {
 }
 
 // plugin available at window.cordova.plugins.email
-interface Cordova {
-    plugins: {
-        email: EmailComposer
-    }
+interface CordovaPlugins {
+    email: EmailComposer
 }
