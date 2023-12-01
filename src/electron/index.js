@@ -22,7 +22,7 @@
 const path = require('path');
 const fs = require('fs-extra');
 
-const util = require('../EmailComposerUtil');
+const util = require('./EmailComposerUtil');
 
 const {shell} = require('electron')
 const {Buffer} = require("buffer");

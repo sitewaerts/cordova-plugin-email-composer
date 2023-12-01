@@ -274,7 +274,7 @@ var util = {
     },
 
     /**
-     * could be used for browser
+     * could be used for browser and electron
      *
      * eml files are supported by
      * - Outlook, Outlook Express
@@ -292,7 +292,7 @@ var util = {
     },
 
     /**
-     * could be used for browser
+     * could be used for browser and electron
      * creates a blob url pointing to the email draft in eml format
      * @param {*} props
      * @return {LaunchInfoUri}

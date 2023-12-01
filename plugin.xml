@@ -44,6 +44,7 @@
         <engine name="cordova-android" version=">=12.0.0" />
         <engine name="cordova-ios" version=">=4.0.0" />
         <engine name="cordova-windows" version=">=4.3.0" />
+        <engine name="cordova-electron" version=">=4.0.0" />
     </engines>
 
     <!-- interface -->
@@ -167,7 +168,7 @@
             <runs />
         </js-module>
 
-        <js-module src="src/EmailComposerUtil.js" name="EmailComposerUtil">
+        <js-module src="src/electron/EmailComposerUtil.js" name="EmailComposerUtil">
             <runs />
         </js-module>
     </platform>
