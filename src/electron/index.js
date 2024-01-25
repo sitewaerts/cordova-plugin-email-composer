@@ -151,9 +151,18 @@ const emailComposerPlugin = {
     open: ([props], callbackContext) =>
     {
         if (props.app === "emlFile")
+        {
             openEMLFile(props, callbackContext);
+        }
         else
+        {
+            if(util.isHtml(props))
+            {
+                callbackContext.error("cannot send html body via mailto uri");
+                return;
+            }
             openMailtoUri(props, callbackContext)
+        }
     }
 }
 
