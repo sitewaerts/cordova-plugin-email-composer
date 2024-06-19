@@ -22,7 +22,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
         id="cordova-plugin-email-composer"
-        version="0.10.3-sw">
+        version="0.10.4-sw">
 
     <name>EmailComposer</name>
 
@@ -150,7 +150,7 @@
             <runs />
         </js-module>
 
-        <js-module src="src/EmailComposerUtil.js" name="EmailComposerUtil">
+        <js-module src="src/electron/EmailComposerUtil.js" name="EmailComposerUtil">
             <runs />
         </js-module>
     </platform>
