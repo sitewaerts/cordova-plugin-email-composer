@@ -376,7 +376,7 @@ function getMailToUri(props, callback){
     var mailto = util.getMailToUri(props, false);
     var options = new Windows.System.LauncherOptions();
     callback({
-        opts: options,
+        options: options,
         close: function(){
             mailto.close();
         },

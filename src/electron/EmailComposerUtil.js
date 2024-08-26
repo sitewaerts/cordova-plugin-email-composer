@@ -316,8 +316,14 @@ var util = {
         };
     },
     /**
-     * see https://docs.fileformat.com/email/eml/
-     * see https://github.com/mikel/mail/tree/master/spec/fixtures
+     * EML Specification
+     *  - https://docs.fileformat.com/email/eml/
+     *  - https://github.com/mikel/mail/tree/master/spec/fixtures
+     *
+     * Outlook 365 unterstützt zur Zeit nur das Öffnen von EML als bereits gesendete Emails. Das Öffnen ungesendeter Emails als DRAFT wird (noch) nicht unterstützt.
+     *    - https://answers.microsoft.com/en-us/outlook_com/forum/all/eml-files-no-longer-opening-as-a-draft-e-mail-to/a75b956f-170f-4209-9a86-0f0cbec593ad
+     *    - https://answers.microsoft.com/en-us/outlook_com/forum/all/the-new-outlook-app-doesnt-open-eml-files/927dca5f-e44b-4116-a4bb-a15c7acd6525?page=3
+     *    - https://m365admin.handsontek.net/new-outlook-for-windows-opening-saved-eml-msg-and-oft-files/
      *
      * @param {*} props
      * @return {LaunchInfoText}
