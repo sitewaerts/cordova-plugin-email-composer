@@ -34,7 +34,6 @@ const {Buffer} = require("buffer");
  */
 function openMailtoUri(props, callbackContext)
 {
-
     const mailTo = util.getMailToUri(props, true);
     shell.openExternal(mailTo.uri).then(() =>
     {
@@ -136,12 +135,18 @@ const emailComposerPlugin = {
         callbackContext.success(app === 'mailto:' || app === 'mailto' ? true : null)
     },
     /**
+     * @param {string | null} [app]
      * @param {CallbackContext} callbackContext
      * @void
      */
-    client: ([], callbackContext) =>
+    client: ([app], callbackContext) =>
     {
-        callbackContext.success()
+        if(app === 'mailto:' || app === 'mailto')
+            callbackContext.success(true);
+        else if(app === 'emlFile')
+            callbackContext.success(true);
+        else
+            callbackContext.success(null)
     },
     /**
      * @param {*} props
